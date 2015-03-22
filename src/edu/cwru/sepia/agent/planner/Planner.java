@@ -40,8 +40,9 @@ public class Planner {
 					.getValue();
 			List<GameState> goalPath = getPathToGoal(goalCondition,
 					plan.get(plan.size() - 1));
-			plan.addAll(goalPath);
-			// plan = new ArrayList<>(goalPath);
+			//plan.addAll(goalPath);
+			System.out.println(goalPath.toString());
+			plan = new ArrayList<>(goalPath);
 		}
 		return plan;
 	}
@@ -57,7 +58,8 @@ public class Planner {
 			// comparing states based on their heuristic values
 			Collections.sort(states);
 			current = states.get(0);
-			states.remove(current);
+			System.out.println("Current state is: " + current.toString());
+			states.remove(0);
 			System.out.println("Still in A star loop");
 		} while (!current.isGoal(goalCondition) && !states.isEmpty());
 		// Generate the list from the found state.
@@ -154,6 +156,10 @@ public class Planner {
 		System.out.println("PRINTING PLAN");
 		for (GameState state : plan) {
 			writer.print("Step " + state.getDepth() + " - ");
+			if (state == null) {
+				System.out.println("State is null..exiting");
+				System.exit(1);
+			}
 			writer.print("Action: " + state.getFromParent().getName() + " (");
 			for (Value val : state.getFromParent().getConstants()) {
 				writer.print(val.getConstantAsString());

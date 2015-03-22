@@ -31,6 +31,7 @@ public class PlanTester {
 		planner = new Planner(actions, startState, goalState);
 		plan = planner.createPlan();
 		System.out.println("got a plan");
+		System.out.println(plan.toString());
 		Planner.printPlan(plan, System.out);
 		System.out.println("reached the end");
 	}

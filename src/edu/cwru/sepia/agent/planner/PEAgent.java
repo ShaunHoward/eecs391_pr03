@@ -124,7 +124,7 @@ public class PEAgent extends Agent {
 	public Map<Integer, Action> middleStep(State.StateView stateView,
 			History.HistoryView historyView) {
 
-		Map<Integer, edu.cwru.sepia.action.Action> builder = new HashMap<Integer, edu.cwru.sepia.action.Action>();
+		Map<Integer, Action> builder = new HashMap<Integer, Action>();
 
 		Action b = null;
 		GameState state = getNextAction(stateView, townhalls.get(0));
@@ -134,6 +134,9 @@ public class PEAgent extends Agent {
 
 		System.out.println("Executing Action:");
 		printStateAction(state);
+		for (UnitView peasant : peasants){
+			System.out.println("Peasant ID: " + peasant.getID());
+		}
 
 		PlanAction action = state.getFromParent();
 		int peasantId = 0;
@@ -149,18 +152,28 @@ public class PEAgent extends Agent {
 				location = action.getConstants().get(2).getValue();
 				peasant = stateView.getUnit(peasantId);
 				resource = findClosestResource(peasant, location, stateView);
+				int xDiff = Math.abs(peasant.getXPosition() - townhalls.get(0).getXPosition());
+				int yDiff = Math.abs(peasant.getYPosition() - townhalls.get(0).getYPosition());
+				int manhattan = xDiff + yDiff;
 				if (resource != null) {
 					b = Action.createCompoundMove(peasantId,
 							resource.getXPosition(), resource.getYPosition());
 					System.out.println("Moving to resource "
 							+ resource.getXPosition() + ", "
 							+ resource.getYPosition());
+					System.out.println("with peasant: " + peasantId);
 					builder.put(peasantId, b);
-				} else {
+			//	} else if (manhattan > 1){
+				} else if (peasant.getCurrentDurativeAction() == null){
 					b = Action.createCompoundMove(peasantId, townhalls.get(0)
 							.getXPosition(), townhalls.get(0).getYPosition());
 					builder.put(peasantId, b);
+				} else {
+					System.out.println("Still performing move.");
 				}
+				
+				System.out.printf("peasant x: %d, y: %d", peasant.getXPosition(), peasant.getYPosition());
+				System.out.printf("townhall x: %d, y: %d", townhalls.get(0).getXPosition(), townhalls.get(0).getYPosition());
 				break;
 			case "Harvest1":
 				// Harvest the adjacent resource (peasant should be standing next to
@@ -173,6 +186,7 @@ public class PEAgent extends Agent {
 				if (resource == null) {
 					System.out.println("Issue with finding closest resource");
 				}
+
 				Direction resDir = getNextDirection(resource.getXPosition() - peasant.getXPosition(), resource.getYPosition() - peasant.getYPosition());
 				b = Action.createPrimitiveGather(peasantId, resDir);
 				builder.put(peasantId, b);
@@ -182,7 +196,11 @@ public class PEAgent extends Agent {
 				// hall already)
 				System.out.println("Depositing!");
 				peasant = stateView.getUnit(peasantId);
-				peasantId = action.getConstants().get(0).getValue();
+				//peasantId = action.getConstants().get(0).getValue();
+				System.out.println(peasant.toString());
+				System.out.println(townhalls.get(0).toString());
+				System.out.printf("peasant x: %d, y: %d", peasant.getXPosition(), peasant.getYPosition());
+				System.out.printf("townhall x: %d, y: %d", townhalls.get(0).getXPosition(), townhalls.get(0).getYPosition());
 				Direction thDir = getNextDirection(townhalls.get(0).getXPosition() - peasant.getXPosition(),
 						townhalls.get(0).getYPosition() - peasant.getYPosition());
 				b = Action.createPrimitiveDeposit(peasantId, thDir);
@@ -331,6 +349,7 @@ public class PEAgent extends Agent {
 	 *         error
 	 */
 	private Direction getNextDirection(int xDiff, int yDiff) {
+		System.out.printf("xDiff: %d, yDiff %d", xDiff, yDiff);
 		// figure out the direction the footman needs to move in
 		if (xDiff == 1 && yDiff == 1) {
 			return Direction.SOUTHEAST;

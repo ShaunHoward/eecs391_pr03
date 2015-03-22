@@ -251,7 +251,7 @@ public class PlanAction implements StripsAction {
 						if (position1.equals(position2)) {
 							continue;
 						}
-						variableCombos.add(new Value[] { new Value(unit),
+						variableCombos.add(new Value[] { new Value(unit.getValue()),
 								new Value(position1), new Value(position2) });
 					}
 				}
@@ -270,7 +270,7 @@ public class PlanAction implements StripsAction {
 							}
 							variableCombos
 									.add(new Value[] {
-											new Value(unit1),
+											new Value(unit1.getValue()),
 											new Value("second", unit2
 													.getValue()),
 											new Value(position1),
@@ -296,7 +296,7 @@ public class PlanAction implements StripsAction {
 									continue;
 								}
 								variableCombos.add(new Value[] {
-										new Value(unit1),
+										new Value(unit1.getValue()),
 										new Value("second", unit2.getValue()),
 										new Value("third", unit3.getValue()),
 										new Value(position1),
@@ -325,7 +325,7 @@ public class PlanAction implements StripsAction {
 					}
 					for (Value position : positions) {
 						for (Value type : types) {
-							variableCombos.add(new Value[] { new Value(unit1),
+							variableCombos.add(new Value[] { new Value(unit1.getValue()),
 									new Value("second", unit2.getValue()),
 									new Value(position), new Value(type) });
 						}
@@ -346,7 +346,7 @@ public class PlanAction implements StripsAction {
 						for (Value position : positions) {
 							for (Value type : types) {
 								variableCombos.add(new Value[] {
-										new Value(unit1),
+										new Value(unit1.getValue()),
 										new Value("second", unit2.getValue()),
 										new Value("third", unit3.getValue()),
 										new Value(position), new Value(type) });
@@ -362,7 +362,7 @@ public class PlanAction implements StripsAction {
 					if (type.equals(Condition.NOTHING)) {
 						continue;
 					}
-					variableCombos.add(new Value[] { new Value(unit),
+					variableCombos.add(new Value[] { new Value(unit.getValue()),
 							new Value(type) });
 				}
 			}
@@ -377,7 +377,7 @@ public class PlanAction implements StripsAction {
 						if (type.equals(Condition.NOTHING)) {
 							continue;
 						}
-						variableCombos.add(new Value[] { new Value(unit1),
+						variableCombos.add(new Value[] { new Value(unit1.getValue()),
 								new Value("second", unit2.getValue()),
 								new Value(type) });
 					}
@@ -398,7 +398,7 @@ public class PlanAction implements StripsAction {
 							if (type.equals(Condition.NOTHING)) {
 								continue;
 							}
-							variableCombos.add(new Value[] { new Value(unit1),
+							variableCombos.add(new Value[] { new Value(unit1.getValue()),
 									new Value("second", unit2.getValue()),
 									new Value("third", unit3.getValue()),
 									new Value(type) });

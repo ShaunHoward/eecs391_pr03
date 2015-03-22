@@ -82,7 +82,7 @@ public class PlannerAgent extends Agent {
 		}
 		
 		GameState initialState = new GameState(stateView,
-				playernum, requiredGold, requiredWood, buildPeasants);
+				peasantIds.get(0), requiredGold, requiredWood, buildPeasants);
 		Stack<PlanAction> stripsPlan = AstarSearch(initialState);
 
 		GameState goalState = GameState.getGoalState(requiredGold, requiredWood);
