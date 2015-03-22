@@ -38,7 +38,7 @@ public class Planner {
 	public List<GameState> createPlan() {
 		List<GameState> plan = new ArrayList<>();
 		plan.add(startState);
-		for (Condition goalCondition : goalState.getState()) {
+		for (Condition goalCondition : goalState.getConditions()) {
 			GameState.isGold = goalCondition.getValue("type").getValue() == Condition.GOLD
 					.getValue();
 			List<GameState> goalPath = getPathToGoal(goalCondition,
@@ -52,50 +52,60 @@ public class Planner {
 
 	private List<GameState> getPathToGoal(Condition goalCondition,
 			GameState currentState) {
-		// Find a goal state.
-		PriorityQueue<GameState> openStates = new PriorityQueue<>();
-		List<GameState> possibleStates = new ArrayList<>();
-		Set<GameState> expandedStates = new HashSet<>();
+//		List<GameState> openStates = new ArrayList<>();
+//		// Find a goal state.
+//		PriorityQueue<GameState> openStates = new PriorityQueue<>();
+//		List<GameState> possibleStates = new ArrayList<>();
+//		Set<GameState> expandedStates = new HashSet<>();
 		GameState current = currentState;
-		GameState cheapestState;
-		openStates.add(currentState);
-		
-		 //run A* to find optimal plan
-		while (!openStates.isEmpty()) {
-			System.out.println("In a star loop");
-			System.out.println("Current state is: " + current.toString());
-			cheapestState = openStates.poll();
-			
-			if (current.isGoal(goalCondition)) {
-				return AstarPath(cheapestState);
-			}
-			
-			expandedStates.add(cheapestState);
-			possibleStates = cheapestState.generateChildren(availableActions);
-			
-			for (GameState state : possibleStates) {
-				if (!expandedStates.contains(state) &&
-					!openStates.contains(state)) {
-					state.setDepth(cheapestState.getDepth() + 1);
-//					state.setCost(state.getDepth() + distanceBetweenstates(state, goal));
-					openStates.add(state);
-				}
-			}
+//		GameState cheapestState;
+//		openStates.add(currentState);
+//		
+//		 //run A* to find optimal plan
+//		while (!openStates.isEmpty()) {
+//			System.out.println("In a star loop");
+//			System.out.println("Current state is: " + current.toString());
+//			cheapestState = openStates.poll();
+//			
+//			if (cheapestState.isGoal(goalCondition)) {
+//				return AstarPath(cheapestState);
+//			}
+//			
+//			expandedStates.add(cheapestState);
+//			possibleStates = cheapestState.generateChildren(availableActions);
+//			//openStates.addAll(possibleStates);
+//			
+//			for (GameState state : possibleStates) {
+//				if (!expandedStates.contains(state) &&
+//					!openStates.contains(state)) {
+//					state.setDepth(cheapestState.getDepth() + 1);
+////					state.setCost(state.getDepth() + distanceBetweenstates(state, goal));
+//					openStates.add(state);
+//				}
+//			}
+//		}
+//		
+//		System.err.println("No available path.");
+//		return null;
+
+		 // Find a goal state.
+		List<GameState> states = new ArrayList<>();
+		do {
+			states.addAll(current.generateChildren(availableActions));
+			// A* is being performed here, since the State.compareTo() is comparing states based on their heuristic values
+			Collections.sort(states);
+			current = states.get(0);
+			states.remove(current);
+		} while (!current.isGoal(goalCondition) && !states.isEmpty());
+		// Generate the list from the found state.
+		List<GameState> path = new ArrayList<>();
+		while (current.getParent() != null) {
+			path.add(0, current);
+			current = current.getParent();
 		}
 		
-		System.err.println("No available path.");
-		return null;
+		return path;
 
-//		do {
-//			openStates.addAll(getNextStates(current));
-//			// A* is being performed here, since the State.compareTo() is
-//			// comparing states based on their heuristic values
-//			Collections.sort(openStates);
-//			current = openStates.get(0);
-//			System.out.println("Current state is: " + current.toString());
-//			openStates.remove(0);
-//			System.out.println("Still in A star loop");
-//		} while (!current.isGoal(goalCondition) && !openStates.isEmpty());
 
 	}
 	
