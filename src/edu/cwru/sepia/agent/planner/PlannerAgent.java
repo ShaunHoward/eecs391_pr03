@@ -5,6 +5,7 @@ import edu.cwru.sepia.agent.Agent;
 import edu.cwru.sepia.agent.planner.actions.StripsAction;
 import edu.cwru.sepia.environment.model.history.History;
 import edu.cwru.sepia.environment.model.state.State;
+import edu.cwru.sepia.environment.model.state.Unit.UnitView;
 
 import java.io.*;
 import java.util.*;
@@ -14,124 +15,156 @@ import java.util.*;
  */
 public class PlannerAgent extends Agent {
 
-    final int requiredWood;
-    final int requiredGold;
-    final boolean buildPeasants;
+	final int requiredWood;
+	final int requiredGold;
+	final boolean buildPeasants;
 
-    // Your PEAgent implementation. This prevents you from having to parse the text file representation of your plan.
-    PEAgent peAgent;
+	List<GameState> plan;
+	private int scenario;
 
-    public PlannerAgent(int playernum, String[] params) {
-        super(playernum);
+	// Your PEAgent implementation. This prevents you from having to parse the
+	// text file representation of your plan.
+	PEAgent peAgent;
 
-        if(params.length < 3) {
-            System.err.println("You must specify the required wood and gold amounts and whether peasants should be built");
-        }
+	public PlannerAgent(int playernum, String[] params) {
+		super(playernum);
 
-        requiredWood = Integer.parseInt(params[0]);
-        requiredGold = Integer.parseInt(params[1]);
-        buildPeasants = Boolean.parseBoolean(params[2]);
+		if (params.length < 3) {
+			System.err
+					.println("You must specify the required wood and gold amounts and whether peasants should be built");
+		}
 
+		requiredWood = Integer.parseInt(params[0]);
+		requiredGold = Integer.parseInt(params[1]);
+		buildPeasants = Boolean.parseBoolean(params[2]);
 
-        System.out.println("required wood: " + requiredWood + " required gold: " + requiredGold + " build Peasants: " + buildPeasants);
-    }
+		System.out.println("required wood: " + requiredWood
+				+ " required gold: " + requiredGold + " build Peasants: "
+				+ buildPeasants);
+	}
 
-    @Override
-    public Map<Integer, Action> initialStep(State.StateView stateView, History.HistoryView historyView) {
+	@Override
+	public Map<Integer, Action> initialStep(State.StateView stateView,
+			History.HistoryView historyView) {
 
-        Stack<StripsAction> plan = AstarSearch(new GameState(stateView, playernum, requiredGold, requiredWood, buildPeasants));
+		List<Integer> allUnitIds = stateView.getAllUnitIds();
+		List<Integer> peasantIds = new ArrayList<Integer>();
 
-        if(plan == null) {
-            System.err.println("No plan was found");
-            System.exit(1);
-            return null;
-        }
+		for (int i = 0; i < allUnitIds.size(); i++) {
+			int id = allUnitIds.get(i);
+			UnitView unit = stateView.getUnit(id);
+			String unitTypeName = unit.getTemplateView().getName();
+			if (unitTypeName.equals("Peasant")) {
+				peasantIds.add(id);
+			}
+		}
 
-        // write the plan to a text file
-        savePlan(plan);
+		List<PlanAction> actions = PlanAction.getActions(scenario);
+		GameState startState = GameState.generateInitialState(peasantIds.get(0));
+		GameState goalState = GameState.getGoalState(scenario);
+		Planner planner = new Planner(actions, startState, goalState);
+		plan = planner.createPlan();
 
+		Stack<StripsAction> plan = AstarSearch(new GameState(stateView,
+				playernum, requiredGold, requiredWood, buildPeasants));
 
-        // Instantiates the PEAgent with the specified plan.
-        peAgent = new PEAgent(playernum, plan);
+		if (plan == null) {
+			System.err.println("No plan was found");
+			System.exit(1);
+			return null;
+		}
 
-        return peAgent.initialStep(stateView, historyView);
-    }
+		// write the plan to a text file
+		savePlan(plan);
 
-    @Override
-    public Map<Integer, Action> middleStep(State.StateView stateView, History.HistoryView historyView) {
-        if(peAgent == null) {
-            System.err.println("Planning failed. No PEAgent initialized.");
-            return null;
-        }
+		// Instantiates the PEAgent with the specified plan.
+		peAgent = new PEAgent(playernum, plan);
 
-        return peAgent.middleStep(stateView, historyView);
-    }
+		return peAgent.initialStep(stateView, historyView);
+	}
 
-    @Override
-    public void terminalStep(State.StateView stateView, History.HistoryView historyView) {
+	@Override
+	public Map<Integer, Action> middleStep(State.StateView stateView,
+			History.HistoryView historyView) {
+		if (peAgent == null) {
+			System.err.println("Planning failed. No PEAgent initialized.");
+			return null;
+		}
 
-    }
+		return peAgent.middleStep(stateView, historyView);
+	}
 
-    @Override
-    public void savePlayerData(OutputStream outputStream) {
+	@Override
+	public void terminalStep(State.StateView stateView,
+			History.HistoryView historyView) {
 
-    }
+	}
 
-    @Override
-    public void loadPlayerData(InputStream inputStream) {
+	@Override
+	public void savePlayerData(OutputStream outputStream) {
 
-    }
+	}
 
-    /**
-     * Perform an A* search of the game graph. This should return your plan as a stack of actions. This is essentially
-     * the same as your first assignment. The implementations should be very similar. The difference being that your
-     * nodes are now GameState objects not MapLocation objects.
-     *
-     * @param startState The state which is being planned from
-     * @return The plan or null if no plan is found.
-     */
-    private Stack<StripsAction> AstarSearch(GameState startState) {
-        // TODO: Implement me!
-        return null;
-    }
+	@Override
+	public void loadPlayerData(InputStream inputStream) {
 
-    /**
-     * This has been provided for you. Each strips action is converted to a string with the toString method. This means
-     * each class implementing the StripsAction interface should override toString. Your strips actions should have a
-     * form matching your included Strips definition writeup. That is <action name>(<param1>, ...). So for instance the
-     * move action might have the form of Move(peasantID, X, Y) and when grounded and written to the file
-     * Move(1, 10, 15).
-     *
-     * @param plan Stack of Strips Actions that are written to the text file.
-     */
-    private void savePlan(Stack<StripsAction> plan) {
-        if (plan == null) {
-            System.err.println("Cannot save null plan");
-            return;
-        }
+	}
 
-        File outputDir = new File("saves");
-        outputDir.mkdirs();
+	/**
+	 * Perform an A* search of the game graph. This should return your plan as a
+	 * stack of actions. This is essentially the same as your first assignment.
+	 * The implementations should be very similar. The difference being that
+	 * your nodes are now GameState objects not MapLocation objects.
+	 *
+	 * @param startState
+	 *            The state which is being planned from
+	 * @return The plan or null if no plan is found.
+	 */
+	private Stack<StripsAction> AstarSearch(GameState startState) {
+		// TODO: Implement me!
+		return null;
+	}
 
-        File outputFile = new File(outputDir, "plan.txt");
+	/**
+	 * This has been provided for you. Each strips action is converted to a
+	 * string with the toString method. This means each class implementing the
+	 * StripsAction interface should override toString. Your strips actions
+	 * should have a form matching your included Strips definition writeup. That
+	 * is <action name>(<param1>, ...). So for instance the move action might
+	 * have the form of Move(peasantID, X, Y) and when grounded and written to
+	 * the file Move(1, 10, 15).
+	 *
+	 * @param plan
+	 *            Stack of Strips Actions that are written to the text file.
+	 */
+	private void savePlan(Stack<StripsAction> plan) {
+		if (plan == null) {
+			System.err.println("Cannot save null plan");
+			return;
+		}
 
-        PrintWriter outputWriter = null;
-        try {
-            outputFile.createNewFile();
+		File outputDir = new File("saves");
+		outputDir.mkdirs();
 
-            outputWriter = new PrintWriter(outputFile.getAbsolutePath());
+		File outputFile = new File(outputDir, "plan.txt");
 
-            Stack<StripsAction> tempPlan = (Stack<StripsAction>) plan.clone();
-            while(!tempPlan.isEmpty()) {
-                outputWriter.println(tempPlan.pop().toString());
-            }
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            if (outputWriter != null)
-                outputWriter.close();
-        }
-    }
+		PrintWriter outputWriter = null;
+		try {
+			outputFile.createNewFile();
+
+			outputWriter = new PrintWriter(outputFile.getAbsolutePath());
+
+			Stack<StripsAction> tempPlan = (Stack<StripsAction>) plan.clone();
+			while (!tempPlan.isEmpty()) {
+				outputWriter.println(tempPlan.pop().toString());
+			}
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} finally {
+			if (outputWriter != null)
+				outputWriter.close();
+		}
+	}
 }
