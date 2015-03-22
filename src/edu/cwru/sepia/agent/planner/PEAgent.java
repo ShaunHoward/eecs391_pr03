@@ -152,9 +152,10 @@ public class PEAgent extends Agent {
 				location = action.getConstants().get(2).getValue();
 				peasant = stateView.getUnit(peasantId);
 				resource = findClosestResource(peasant, location, stateView);
-				int xDiff = Math.abs(peasant.getXPosition() - townhalls.get(0).getXPosition());
-				int yDiff = Math.abs(peasant.getYPosition() - townhalls.get(0).getYPosition());
-				int manhattan = xDiff + yDiff;
+				
+				Position peasPos = new Position(peasant.getXPosition(), peasant.getYPosition());
+				Position thPos = new Position (townhalls.get(0).getXPosition(), townhalls.get(0).getYPosition());
+				
 				if (resource != null) {
 					b = Action.createCompoundMove(peasantId,
 							resource.getXPosition(), resource.getYPosition());
@@ -163,17 +164,21 @@ public class PEAgent extends Agent {
 							+ resource.getYPosition());
 					System.out.println("with peasant: " + peasantId);
 					builder.put(peasantId, b);
-			//	} else if (manhattan > 1){
-				} else if (peasant.getCurrentDurativeAction() == null){
-					b = Action.createCompoundMove(peasantId, townhalls.get(0)
-							.getXPosition(), townhalls.get(0).getYPosition());
+			//	} else if (peasant.getCurrentDurativeAction() == null){
+				} else if (!peasPos.isAdjacent(thPos)) {
+					System.out.println("Peasant ID for townhall move is: " + peasantId);
+					Position depPos = getDepositPosition(peasant);
+					b = Action.createCompoundMove(peasantId, depPos.x, depPos.y);
 					builder.put(peasantId, b);
-				} else {
-					System.out.println("Still performing move.");
 				}
+//				} else {
+//					System.out.println("Still performing move.");
+//				}
 				
 				System.out.printf("peasant x: %d, y: %d", peasant.getXPosition(), peasant.getYPosition());
+				System.out.println();
 				System.out.printf("townhall x: %d, y: %d", townhalls.get(0).getXPosition(), townhalls.get(0).getYPosition());
+				System.out.println();
 				break;
 			case "Harvest1":
 				// Harvest the adjacent resource (peasant should be standing next to
@@ -195,20 +200,40 @@ public class PEAgent extends Agent {
 				// Deposit the held resource (peasant should be next to the town
 				// hall already)
 				System.out.println("Depositing!");
+				peasantId = action.getConstants().get(0).getValue();
 				peasant = stateView.getUnit(peasantId);
-				//peasantId = action.getConstants().get(0).getValue();
-				System.out.println(peasant.toString());
-				System.out.println(townhalls.get(0).toString());
 				System.out.printf("peasant x: %d, y: %d", peasant.getXPosition(), peasant.getYPosition());
+				System.out.println();
 				System.out.printf("townhall x: %d, y: %d", townhalls.get(0).getXPosition(), townhalls.get(0).getYPosition());
+				System.out.println();
 				Direction thDir = getNextDirection(townhalls.get(0).getXPosition() - peasant.getXPosition(),
 						townhalls.get(0).getYPosition() - peasant.getYPosition());
 				b = Action.createPrimitiveDeposit(peasantId, thDir);
 				builder.put(peasantId, b);
 				break;
 		}
+		System.out.println("PEAgent middle step executed.");
 
 		return builder;
+	}
+	
+	
+	private Position getDepositPosition(UnitView peasant) {
+		Position peasPos = new Position(peasant.getXPosition(), peasant.getYPosition());
+		Position thPos = new Position(townhalls.get(0).getXPosition(), townhalls.get(0).getYPosition());
+		List<Position> adjPos = thPos.getAdjacentPositions();
+		Position depPos = new Position(0, 0);
+		double minDist = Double.MAX_VALUE;
+		for (Position adj : adjPos) {
+			double dist = peasPos.euclideanDistance(adj);
+			if (dist < minDist) {
+				minDist = dist;
+				depPos = adj;
+			}
+		}
+		System.out.println("Deposit position is: " + depPos.toString());
+		return depPos;
+		
 	}
 
 	/**
@@ -263,6 +288,7 @@ public class PEAgent extends Agent {
 			}
 			break;
 		}
+		System.out.println("Get next action executed.");
 
 		return curState == plan.size() ? null : plan.get(curState);
 	}
