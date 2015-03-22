@@ -34,7 +34,7 @@ public interface StripsAction {
      * In the process of updating the peasant state you should also update the GameState's cost and parent pointers.
      *
      * @param state State to apply action to
-     * @return State resulting from successful action appliction.
+     * @return State resulting from successful action application.
      */
     public GameState apply(GameState state);
 }

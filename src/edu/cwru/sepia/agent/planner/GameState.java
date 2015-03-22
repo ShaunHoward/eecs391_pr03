@@ -30,6 +30,8 @@ public class GameState implements Comparable<GameState> {
 
 	private static int GoldValue;
 	private static int WoodValue;
+	private static int requiredWood;
+	private static int requiredGold;
 	public static boolean isGold;
 
 	private GameState parent;
@@ -41,6 +43,14 @@ public class GameState implements Comparable<GameState> {
 	private List<Condition> state;
 	private GameState initialState;
 	private int numPeasants = 1;
+
+	public int getNumPeasants() {
+		return numPeasants;
+	}
+
+	public void setNumPeasants(int numPeasants) {
+		this.numPeasants = numPeasants;
+	}
 
 	/**
 	 * Construct a GameState from a stateview object. This is used to construct
@@ -60,7 +70,7 @@ public class GameState implements Comparable<GameState> {
 	 */
 	public GameState(State.StateView state, int playernum, int requiredGold,
 			int requiredWood, boolean buildPeasants) {
-		generateInitialState(playernum);
+		 this(generateInitialState(playernum, requiredGold, requiredWood, buildPeasants));
 	}
 	
 	public GameState(List<Condition> initialState) {
@@ -80,6 +90,15 @@ public class GameState implements Comparable<GameState> {
 		 this.state = state;
 		 this.numPeasants = numPeasants;
 	}
+    
+    public GameState(GameState orig){
+    	this.parent = orig.parent;
+    	this.depth = orig.depth;
+    	this.fromParent = orig.fromParent;
+    	this.valuesFromParent = orig.valuesFromParent;
+    	this.state = orig.state;
+    	this.numPeasants = orig.numPeasants;
+    }
 
 	/**
 	 * Unlike in the first A* assignment there are many possible goal states. As
@@ -95,34 +114,20 @@ public class GameState implements Comparable<GameState> {
 		return state.contains(goal);
 	}
 
-	public static GameState getGoalState(int scenario) {
+	public static GameState getGoalState(int requiredGold, int requiredWood) {
 		List<Condition> conditions = new ArrayList<>();
-		int wood = 0;
-		int gold = 0;
-		switch (scenario) {
-		case 1:
-			wood = 200;
-			gold = 200;
-			break;
-		case 2:
-		case 3:
-			wood = 1000;
-			gold = 1000;
-			break;
-		case 4:
-			wood = 2000;
-			gold = 3000;
-			break;
-		}
+
 		// Add condition Has(Gold, AMT)
 		conditions.add(new Condition(Condition.HAS, Arrays.asList(new Value[] {
-				new Value(Condition.GOLD), new Value("amt", gold) })));
+				new Value(Condition.GOLD), new Value("amt", requiredGold) })));
 		// Add condition Has(Wood, AMT)
 		conditions.add(new Condition(Condition.HAS, Arrays.asList(new Value[] {
-				new Value(Condition.WOOD), new Value("amt", wood) })));
+				new Value(Condition.WOOD), new Value("amt", requiredWood) })));
 		GameState newState = new GameState(conditions);
-		GameState.GoldValue = gold;
-		GameState.WoodValue = wood;
+		GameState.GoldValue = requiredGold;
+		GameState.WoodValue = requiredWood;
+		GameState.requiredGold = requiredGold;
+		GameState.requiredWood = requiredWood;
 		return newState;
 	}
 
@@ -139,7 +144,7 @@ public class GameState implements Comparable<GameState> {
 		return null;
 	}
 
-	public static GameState generateInitialState(int peasantId) {
+	public static GameState generateInitialState(int peasantId, int requiredGold, int requiredWood, boolean buildPeasants) {
 		List<Condition> conditions = new ArrayList<>();
 		// Add condition Holding(Peasant1, Nothing)
 		conditions.add(new Condition(Condition.HOLDING, Arrays
@@ -177,6 +182,11 @@ public class GameState implements Comparable<GameState> {
 		GameState newState = new GameState(conditions);
 		GameState.GoldValue = 0;
 		GameState.WoodValue = 0;
+		GameState.requiredGold = requiredGold;
+		GameState.requiredWood = requiredWood;
+		if (buildPeasants == true){
+			newState.setNumPeasants(3);
+		}
 		return newState;
 	}
 

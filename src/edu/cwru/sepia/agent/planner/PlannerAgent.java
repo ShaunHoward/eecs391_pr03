@@ -15,12 +15,16 @@ import java.util.*;
  */
 public class PlannerAgent extends Agent {
 
+	private static final int WOODSMALL1 = 200, GOLDSMALL1 = 200,
+		WOODSMALL2 = 1000, GOLDSMALL2 = 1000, WOODLARGE1 = 1000,
+		GOLDLARGE1 = 1000, WOODLARGE2 = 2000, GOLDLARGE2 = 3000;
+	
 	final int requiredWood;
 	final int requiredGold;
 	final boolean buildPeasants;
 
 	List<GameState> plan;
-	private int scenario;
+	final int scenario;
 
 	// Your PEAgent implementation. This prevents you from having to parse the
 	// text file representation of your plan.
@@ -37,10 +41,28 @@ public class PlannerAgent extends Agent {
 		requiredWood = Integer.parseInt(params[0]);
 		requiredGold = Integer.parseInt(params[1]);
 		buildPeasants = Boolean.parseBoolean(params[2]);
+		scenario = generateScenario();
 
 		System.out.println("required wood: " + requiredWood
 				+ " required gold: " + requiredGold + " build Peasants: "
 				+ buildPeasants);
+	}
+
+	public int generateScenario(){
+		
+		if (requiredWood == WOODSMALL1 && requiredGold == GOLDSMALL1){
+			return 1;
+		} else  if (requiredWood <= WOODSMALL2 && requiredGold <= GOLDSMALL2){
+			return 2;
+		} else  if (requiredWood <= WOODLARGE1 && requiredGold <= GOLDLARGE1){
+			return 3;
+		} else  if (requiredWood <= WOODLARGE2 && requiredGold <= GOLDLARGE2){
+			return 4;
+	    } else {
+	    	System.err.println("A scenario this large is not fully supported in this implementation.");
+	    	System.err.println("The program may not function correctly.");
+	    	return 4;
+	    }
 	}
 
 	@Override
@@ -58,16 +80,15 @@ public class PlannerAgent extends Agent {
 				peasantIds.add(id);
 			}
 		}
+		
+		GameState initialState = new GameState(stateView,
+				playernum, requiredGold, requiredWood, buildPeasants);
+		Stack<PlanAction> stripsPlan = AstarSearch(initialState);
 
-		List<PlanAction> actions = PlanAction.getActions(scenario);
-		GameState startState = GameState.generateInitialState(peasantIds.get(0));
-		GameState goalState = GameState.getGoalState(scenario);
-		Planner planner = new Planner(actions, startState, goalState);
+		GameState goalState = GameState.getGoalState(requiredGold, requiredWood);
+		Planner planner = new Planner(stripsPlan, initialState, goalState);
 		plan = planner.createPlan();
-
-		Stack<StripsAction> plan = AstarSearch(new GameState(stateView,
-				playernum, requiredGold, requiredWood, buildPeasants));
-
+		
 		if (plan == null) {
 			System.err.println("No plan was found");
 			System.exit(1);
@@ -75,10 +96,10 @@ public class PlannerAgent extends Agent {
 		}
 
 		// write the plan to a text file
-		savePlan(plan);
+		savePlan(stripsPlan);
 
 		// Instantiates the PEAgent with the specified plan.
-		peAgent = new PEAgent(playernum, plan);
+		peAgent = new PEAgent(playernum, plan, stripsPlan);
 
 		return peAgent.initialStep(stateView, historyView);
 	}
@@ -120,9 +141,11 @@ public class PlannerAgent extends Agent {
 	 *            The state which is being planned from
 	 * @return The plan or null if no plan is found.
 	 */
-	private Stack<StripsAction> AstarSearch(GameState startState) {
-		// TODO: Implement me!
-		return null;
+	private Stack<PlanAction> AstarSearch(GameState startState) {
+		Stack<PlanAction> actions = new Stack<>();
+		actions.addAll(PlanAction.getActions(scenario));
+		return actions;
+		//startState = GameState.generateInitialState(peasantIds.get(0));
 	}
 
 	/**
@@ -134,11 +157,11 @@ public class PlannerAgent extends Agent {
 	 * have the form of Move(peasantID, X, Y) and when grounded and written to
 	 * the file Move(1, 10, 15).
 	 *
-	 * @param plan
+	 * @param stripsPlan
 	 *            Stack of Strips Actions that are written to the text file.
 	 */
-	private void savePlan(Stack<StripsAction> plan) {
-		if (plan == null) {
+	private void savePlan(Stack<PlanAction> stripsPlan) {
+		if (stripsPlan == null) {
 			System.err.println("Cannot save null plan");
 			return;
 		}
@@ -154,7 +177,7 @@ public class PlannerAgent extends Agent {
 
 			outputWriter = new PrintWriter(outputFile.getAbsolutePath());
 
-			Stack<StripsAction> tempPlan = (Stack<StripsAction>) plan.clone();
+			Stack<PlanAction> tempPlan = (Stack<PlanAction>) stripsPlan.clone();
 			while (!tempPlan.isEmpty()) {
 				outputWriter.println(tempPlan.pop().toString());
 			}

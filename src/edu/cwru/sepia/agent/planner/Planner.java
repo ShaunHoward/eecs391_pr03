@@ -4,17 +4,29 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Stack;
+
+import edu.cwru.sepia.agent.planner.actions.StripsAction;
 
 public class Planner {
-	private List<PlanAction> availableActions;
+	private Stack<PlanAction> stripsActions;
 	private GameState startState;
 	private GameState goalState;
 
 	public Planner(List<PlanAction> availableActions, GameState startState,
 			GameState goalState) {
-		this.availableActions = new ArrayList<>(availableActions);
+		Stack<PlanAction> actions = new Stack<>();
+		actions.addAll(availableActions);
+		this.stripsActions  = actions;
 		this.startState = startState;
 		this.goalState = goalState;
+	}
+
+	public Planner(Stack<PlanAction> stripsPlan, GameState initialState,
+			GameState goalState2) {
+		this.stripsActions = stripsPlan;
+		startState = initialState;
+		goalState = goalState2;
 	}
 
 	public List<GameState> createPlan() {
@@ -57,7 +69,7 @@ public class Planner {
 		List<PlanAction> possibleActions = generatePossibleActions(currentState);
 		List<GameState> nextStates = new ArrayList<>();
 		for (PlanAction action : possibleActions) {
-			nextStates.add(action.use(currentState));
+			nextStates.add(action.apply(currentState));
 		}
 		return nextStates;
 	}
@@ -102,11 +114,10 @@ public class Planner {
 			addList.add(variable);
 		}
 		List<PlanAction> validActions = new ArrayList<>();
-		for (PlanAction actionTemplate : availableActions) {
-			List<PlanAction> possibleActions = actionTemplate
-					.getPossibleActions(units, positions, types);
+		while(!stripsActions.isEmpty()) {
+			List<PlanAction> possibleActions = stripsActions.pop().getPossibleActions(units, positions, types);
 			inner: for (PlanAction action : possibleActions) {
-				if (action.isApplicableTo(state)) {
+				if (action.preconditionsMet(state)) {
 					for (PlanAction existingAction : validActions) {
 						if (existingAction.equals(action)) {
 							continue inner;

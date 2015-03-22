@@ -15,6 +15,7 @@ import edu.cwru.sepia.environment.model.state.State.StateView;
 import edu.cwru.sepia.environment.model.state.Template;
 import edu.cwru.sepia.environment.model.state.Unit;
 import edu.cwru.sepia.environment.model.state.Unit.UnitView;
+import edu.cwru.sepia.util.Direction;
 
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -31,9 +32,10 @@ import java.util.Stack;
 public class PEAgent extends Agent {
 
 	// The plan being executed
-	//private Stack<StripsAction> plan = null;
+	// private Stack<StripsAction> plan = null;
 	int curState = 0;
 	List<GameState> plan;
+	Stack<PlanAction> stripsPlan;
 
 	// maps the real unit Ids to the plan's unit ids
 	// when you're planning you won't know the true unit IDs that sepia assigns.
@@ -43,28 +45,31 @@ public class PEAgent extends Agent {
 	private int townhallId;
 	private int peasantTemplateId;
 
-	public PEAgent(int playernum, List<GameState> plan) {
+	private List<UnitView> peasants = new ArrayList<>();
+	private List<UnitView> townhalls = new ArrayList<>();
+
+	public PEAgent(int playernum, List<GameState> plan,
+			Stack<PlanAction> stripsPlan2) {
 		super(playernum);
 		peasantIdMap = new HashMap<Integer, Integer>();
 		this.plan = plan;
-
-	}
-
-	public PEAgent(int playernum, Stack<StripsAction> plan2) {
-		super(playernum);
+		this.stripsPlan = stripsPlan2;
 	}
 
 	@Override
 	public Map<Integer, Action> initialStep(State.StateView stateView,
 			History.HistoryView historyView) {
+
 		// gets the townhall ID and the peasant ID
 		for (int unitId : stateView.getUnitIds(playernum)) {
 			Unit.UnitView unit = stateView.getUnit(unitId);
 			String unitType = unit.getTemplateView().getName().toLowerCase();
 			if (unitType.equals("townhall")) {
 				townhallId = unitId;
+				townhalls.add(unit);
 			} else if (unitType.equals("peasant")) {
 				peasantIdMap.put(unitId, unitId);
+				peasants.add(unit);
 			}
 		}
 
@@ -118,78 +123,73 @@ public class PEAgent extends Agent {
 	@Override
 	public Map<Integer, Action> middleStep(State.StateView stateView,
 			History.HistoryView historyView) {
+
 		Map<Integer, edu.cwru.sepia.action.Action> builder = new HashMap<Integer, edu.cwru.sepia.action.Action>();
-		List<Integer> allUnitIds = stateView.getAllUnitIds();
-		List<UnitView> peasants = new ArrayList<>();
-		List<UnitView> townhalls = new ArrayList<>();
-		for (int i = 0; i < allUnitIds.size(); i++) {
-			int id = allUnitIds.get(i);
-			UnitView unit = stateView.getUnit(id);
-			String unitTypeName = unit.getTemplateView().getName();
-			if (unitTypeName.equals("TownHall"))
-				townhalls.add(unit);
-			if (unitTypeName.equals("Peasant"))
-				peasants.add(unit);
-		}
+
 		Action b = null;
 		GameState state = getNextAction(stateView, townhalls.get(0));
 		if (state == null) {
 			return builder;
 		}
+
 		System.out.println("Executing Action:");
 		printStateAction(state);
+
 		PlanAction action = state.getFromParent();
 		int peasantId = 0;
 		int location = 0;
 		UnitView peasant = null;
 		ResourceView resource = null;
+
 		switch (action.getName()) {
-		case "Move1":
-			// Move from peasant id to location
-			System.out.println("Moving!");
-			peasantId = action.getConstants().get(0).getValue();
-			location = action.getConstants().get(2).getValue();
-			peasant = stateView.getUnit(peasantId);
-			resource = findClosestResource(peasant, location, stateView);
-			if (resource != null) {
-				b = new LocatedAction(peasantId, ActionType.COMPOUNDMOVE,
-						resource.getXPosition(), resource.getYPosition());
-				System.out.println("Moving to resource "
-						+ resource.getXPosition() + ", "
-						+ resource.getYPosition());
+			case "Move1":
+				// Move from peasant id to location
+				System.out.println("Moving!");
+				peasantId = action.getConstants().get(0).getValue();
+				location = action.getConstants().get(2).getValue();
+				peasant = stateView.getUnit(peasantId);
+				resource = findClosestResource(peasant, location, stateView);
+				if (resource != null) {
+					b = Action.createCompoundMove(peasantId,
+							resource.getXPosition(), resource.getYPosition());
+					System.out.println("Moving to resource "
+							+ resource.getXPosition() + ", "
+							+ resource.getYPosition());
+					builder.put(peasantId, b);
+				} else {
+					b = Action.createCompoundMove(peasantId, townhalls.get(0)
+							.getXPosition(), townhalls.get(0).getYPosition());
+					builder.put(peasantId, b);
+				}
+				break;
+			case "Harvest1":
+				// Harvest the adjacent resource (peasant should be standing next to
+				// it)
+				System.out.println("Harvesting!");
+				peasantId = action.getConstants().get(0).getValue();
+				location = action.getConstants().get(1).getValue();
+				peasant = stateView.getUnit(peasantId);
+				resource = findClosestResource(peasant, location, stateView);
+				if (resource == null) {
+					System.out.println("Issue with finding closest resource");
+				}
+				Direction resDir = getNextDirection(resource.getXPosition() - peasant.getXPosition(), resource.getYPosition() - peasant.getYPosition());
+				b = Action.createPrimitiveGather(peasantId, resDir);
 				builder.put(peasantId, b);
-			} else {
-				b = new LocatedAction(peasantId, ActionType.COMPOUNDMOVE,
-						townhalls.get(0).getXPosition(), townhalls.get(0)
-								.getYPosition());
+				break;
+			case "Deposit1":
+				// Deposit the held resource (peasant should be next to the town
+				// hall already)
+				System.out.println("Depositing!");
+				peasant = stateView.getUnit(peasantId);
+				peasantId = action.getConstants().get(0).getValue();
+				Direction thDir = getNextDirection(townhalls.get(0).getXPosition() - peasant.getXPosition(),
+						townhalls.get(0).getYPosition() - peasant.getYPosition());
+				b = Action.createPrimitiveDeposit(peasantId, thDir);
 				builder.put(peasantId, b);
-			}
-			break;
-		case "Harvest1":
-			// Harvest the adjacent resource (peasant should be standing next to
-			// it)
-			System.out.println("Harvesting!");
-			peasantId = action.getConstants().get(0).getValue();
-			location = action.getConstants().get(1).getValue();
-			peasant = stateView.getUnit(peasantId);
-			resource = findClosestResource(peasant, location, stateView);
-			if (resource == null) {
-				System.out.println("Issue with finding closest resource");
-			}
-			b = new TargetedAction(peasantId, ActionType.COMPOUNDGATHER,
-					resource.getID());
-			builder.put(peasantId, b);
-			break;
-		case "Deposit1":
-			// Deposit the held resource (peasant should be next to the town
-			// hall already)
-			System.out.println("Depositing!");
-			peasantId = action.getConstants().get(0).getValue();
-			b = new TargetedAction(peasantId, ActionType.COMPOUNDDEPOSIT,
-					townhalls.get(0).getID());
-			builder.put(peasantId, b);
-			break;
+				break;
 		}
+
 		return builder;
 	}
 
@@ -209,6 +209,7 @@ public class PEAgent extends Agent {
 		int location = 0;
 		UnitView peasant = null;
 		ResourceView resource = null;
+
 		switch (action.getName()) {
 		case "Move1":
 			peasantId = action.getConstants().get(0).getValue();
@@ -216,17 +217,15 @@ public class PEAgent extends Agent {
 			peasant = stateView.getUnit(peasantId);
 			resource = findClosestResource(peasant, location, stateView);
 			if (resource != null) {
-				if (isAdjacent(peasant, resource)) { // If we have reached the
-														// destination, do the
-														// next action in the
-														// list
+				// If we have reached the destination, do the next action in the
+				// list
+				if (isAdjacent(peasant, resource)) {
 					curState++;
 				}
 			} else {
-				if (isAdjacent(peasant, townhall)) { // If we have reached the
-														// destination, do the
-														// next action in the
-														// list
+				// If we have reached the destination, do the next action in the
+				// list
+				if (isAdjacent(peasant, townhall)) {
 					curState++;
 				}
 			}
@@ -246,6 +245,7 @@ public class PEAgent extends Agent {
 			}
 			break;
 		}
+
 		return curState == plan.size() ? null : plan.get(curState);
 	}
 
@@ -261,6 +261,7 @@ public class PEAgent extends Agent {
 
 	private void printStateAction(GameState state) {
 		System.out.print(state.getFromParent().getName() + " (");
+
 		for (Value val : state.getFromParent().getConstants()) {
 			System.out.print(val.getConstantAsString());
 			if (state.getFromParent().getConstants().indexOf(val) != state
@@ -268,12 +269,14 @@ public class PEAgent extends Agent {
 				System.out.print(", ");
 			}
 		}
+
 		System.out.println(")");
 	}
 
 	private ResourceView findClosestResource(UnitView peasant, int location,
 			StateView currentState) {
 		List<ResourceView> resources = null;
+
 		if (location == Condition.TOWNHALL.getValue()) {
 			return null;
 		} else if (location == Condition.GOLDMINE.getValue()) {
@@ -286,17 +289,21 @@ public class PEAgent extends Agent {
 			System.out.println("\tPeasant: " + peasant.getID() + ", location: "
 					+ location);
 		}
+
 		double shortestDist = Double.MAX_VALUE;
 		ResourceView closestResource = null;
+
 		for (ResourceView resource : resources) {
 			int deltX = peasant.getXPosition() - resource.getXPosition();
 			int deltY = peasant.getYPosition() - resource.getYPosition();
 			double dist = Math.sqrt((deltX * deltX) + (deltY * deltY));
+
 			if (dist < shortestDist) {
 				shortestDist = dist;
 				closestResource = resource;
 			}
 		}
+
 		return closestResource;
 	}
 
@@ -308,6 +315,41 @@ public class PEAgent extends Agent {
 	 * @return SEPIA representation of same action
 	 */
 	private Action createSepiaAction(StripsAction action) {
+		return null;
+	}
+
+	/**
+	 * Primitive actions take a direction (e.g. NORTH, NORTHEAST, etc) This
+	 * converts the difference between the current position and the desired
+	 * position to a direction.
+	 *
+	 * @param xDiff
+	 *            Integer equal to 1, 0 or -1
+	 * @param yDiff
+	 *            Integer equal to 1, 0 or -1
+	 * @return A Direction instance (e.g. SOUTHWEST) or null in the case of
+	 *         error
+	 */
+	private Direction getNextDirection(int xDiff, int yDiff) {
+		// figure out the direction the footman needs to move in
+		if (xDiff == 1 && yDiff == 1) {
+			return Direction.SOUTHEAST;
+		} else if (xDiff == 1 && yDiff == 0) {
+			return Direction.EAST;
+		} else if (xDiff == 1 && yDiff == -1) {
+			return Direction.NORTHEAST;
+		} else if (xDiff == 0 && yDiff == 1) {
+			return Direction.SOUTH;
+		} else if (xDiff == 0 && yDiff == -1) {
+			return Direction.NORTH;
+		} else if (xDiff == -1 && yDiff == 1) {
+			return Direction.SOUTHWEST;
+		} else if (xDiff == -1 && yDiff == 0) {
+			return Direction.WEST;
+		} else if (xDiff == -1 && yDiff == -1) {
+			return Direction.NORTHWEST;
+		}
+		System.err.println("Invalid path. Could not determine direction");
 		return null;
 	}
 

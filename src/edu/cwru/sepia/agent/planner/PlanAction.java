@@ -5,7 +5,9 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
-public class PlanAction {
+import edu.cwru.sepia.agent.planner.actions.StripsAction;
+
+public class PlanAction implements StripsAction {
 	private String name;
 	private List<String> variables;
 	private List<Condition> preconditions;
@@ -63,8 +65,9 @@ public class PlanAction {
 		return actions;
 	}
 
-	public GameState use(GameState state) {
-		if (!isApplicableTo(state)) {
+	@Override
+	public GameState apply(GameState state) {
+		if (!preconditionsMet(state)) {
 			return null;
 		}
 		List<Condition> newconditions = new ArrayList<>(state.getState());
@@ -148,7 +151,8 @@ public class PlanAction {
 		return new GameState(state, this, constants, newconditions, numPeasants);
 	}
 
-	public boolean isApplicableTo(GameState state) {
+	@Override
+	public boolean preconditionsMet(GameState state) {
 		if (!isAppliedAction) {
 			return false;
 		}
