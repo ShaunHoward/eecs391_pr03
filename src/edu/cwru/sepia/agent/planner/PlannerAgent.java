@@ -85,10 +85,6 @@ public class PlannerAgent extends Agent {
 				peasantIds.get(0), requiredGold, requiredWood, buildPeasants);
 		Stack<PlanAction> stripsPlan = AstarSearch(initialState);
 
-		GameState goalState = GameState.getGoalState(requiredGold, requiredWood);
-		Planner planner = new Planner(stripsPlan, initialState, goalState);
-		plan = planner.createPlan();
-		
 		if (plan == null) {
 			System.err.println("No plan was found");
 			System.exit(1);
@@ -144,8 +140,10 @@ public class PlannerAgent extends Agent {
 	private Stack<PlanAction> AstarSearch(GameState startState) {
 		Stack<PlanAction> actions = new Stack<>();
 		actions.addAll(PlanAction.getActions(scenario));
+		GameState goalState = GameState.getGoalState(requiredGold, requiredWood);
+		Planner planner = new Planner(actions, startState, goalState);
+		plan = planner.createPlan();
 		return actions;
-		//startState = GameState.generateInitialState(peasantIds.get(0));
 	}
 
 	/**

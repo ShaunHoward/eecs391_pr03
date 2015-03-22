@@ -212,7 +212,6 @@ public class PEAgent extends Agent {
 				builder.put(peasantId, b);
 				break;
 		}
-		System.out.println("PEAgent middle step executed.");
 
 		return builder;
 	}

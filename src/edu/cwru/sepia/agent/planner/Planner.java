@@ -3,7 +3,10 @@ package edu.cwru.sepia.agent.planner;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.PriorityQueue;
+import java.util.Set;
 import java.util.Stack;
 
 import edu.cwru.sepia.agent.planner.actions.StripsAction;
@@ -50,106 +53,77 @@ public class Planner {
 	private List<GameState> getPathToGoal(Condition goalCondition,
 			GameState currentState) {
 		// Find a goal state.
-		List<GameState> states = new ArrayList<>();
+		PriorityQueue<GameState> openStates = new PriorityQueue<>();
+		List<GameState> possibleStates = new ArrayList<>();
+		Set<GameState> expandedStates = new HashSet<>();
 		GameState current = currentState;
-		do {
-			states.addAll(getNextStates(current));
-			// A* is being performed here, since the State.compareTo() is
-			// comparing states based on their heuristic values
-			Collections.sort(states);
-			current = states.get(0);
+		GameState cheapestState;
+		openStates.add(currentState);
+		
+		 //run A* to find optimal plan
+		while (!openStates.isEmpty()) {
+			System.out.println("In a star loop");
 			System.out.println("Current state is: " + current.toString());
-			states.remove(0);
-			System.out.println("Still in A star loop");
-		} while (!current.isGoal(goalCondition) && !states.isEmpty());
-		// Generate the list from the found state.
-		List<GameState> path = new ArrayList<>();
-		while (current.getParent() != null) {
-			path.add(0, current);
-			current = current.getParent();
-		}
-		return path;
-	}
-
-	private List<GameState> getNextStates(GameState currentState) {
-		List<PlanAction> possibleActions = generatePossibleActions(currentState);
-		List<GameState> nextStates = new ArrayList<>();
-		for (PlanAction action : possibleActions) {
-			nextStates.add(action.apply(currentState));
-		}
-		return nextStates;
-	}
-
-	public List<PlanAction> generatePossibleActions(GameState state) {
-		List<Value> variables = new ArrayList<>();
-		for (Condition condition : state.getState()) {
-			variables.addAll(condition.getVariables());
-		}
-		List<Value> units = new ArrayList<>();
-		List<Value> positions = new ArrayList<>();
-		List<Value> types = new ArrayList<>();
-		outer: for (Value variable : variables) {
-			if (variable == null || variable.getName().isEmpty()) {
-				continue;
+			cheapestState = openStates.poll();
+			
+			if (current.isGoal(goalCondition)) {
+				return AstarPath(cheapestState);
 			}
-			List<Value> addList = null;
-			if (variable.getName().equalsIgnoreCase("first")
-					|| variable.getName().equalsIgnoreCase("second")
-					|| variable.getName().equalsIgnoreCase("third")) {
-				addList = units;
-			} else if (variable.getName().equalsIgnoreCase("pos")
-					|| variable.getName().equalsIgnoreCase("to")
-					|| variable.getName().equalsIgnoreCase("from")) {
-				addList = positions;
-			} else if (variable.getName().equalsIgnoreCase("type")) {
-				addList = types;
-			} else if (variable.getName().equalsIgnoreCase("amt")) {
-				continue;
-			}
-			if (addList == null) {
-				System.out.println("Unrecognized variable name!!! "
-						+ variable.getName());
-				continue;
-			}
-			for (Value var : addList) {
-				if (variable.getName().equals(var.getName())
-						&& variable.equals(var)) {
-					continue outer;
-				}
-			}
-			addList.add(variable);
-		}
-		// List<PlanAction> validActions = new ArrayList<>();
-		// while(!stripsActions.isEmpty()) {
-		// List<PlanAction> possibleActions =
-		// stripsActions.pop().getPossibleActions(units, positions, types);
-		// inner: for (PlanAction action : possibleActions) {
-		// if (action.preconditionsMet(state)) {
-		// for (PlanAction existingAction : validActions) {
-		// if (existingAction.equals(action)) {
-		// continue inner;
-		// }
-		// }
-		// validActions.add(action);
-		// }
-		// }
-		// }
-		List<PlanAction> validActions = new ArrayList<>();
-		for (PlanAction actionTemplate : availableActions) {
-			List<PlanAction> possibleActions = actionTemplate
-					.getPossibleActions(units, positions, types);
-			inner: for (PlanAction action : possibleActions) {
-				if (action.preconditionsMet(state)) {
-					for (PlanAction existingAction : validActions) {
-						if (existingAction.equals(action)) {
-							continue inner;
-						}
-					}
-					validActions.add(action);
+			
+			expandedStates.add(cheapestState);
+			possibleStates = cheapestState.generateChildren(availableActions);
+			
+			for (GameState state : possibleStates) {
+				if (!expandedStates.contains(state) &&
+					!openStates.contains(state)) {
+					state.setDepth(cheapestState.getDepth() + 1);
+//					state.setCost(state.getDepth() + distanceBetweenstates(state, goal));
+					openStates.add(state);
 				}
 			}
 		}
-		return validActions;
+		
+		System.err.println("No available path.");
+		return null;
+
+//		do {
+//			openStates.addAll(getNextStates(current));
+//			// A* is being performed here, since the State.compareTo() is
+//			// comparing states based on their heuristic values
+//			Collections.sort(openStates);
+//			current = openStates.get(0);
+//			System.out.println("Current state is: " + current.toString());
+//			openStates.remove(0);
+//			System.out.println("Still in A star loop");
+//		} while (!current.isGoal(goalCondition) && !openStates.isEmpty());
+
+	}
+	
+	 /**
+	* Returns the A* path to the given end location
+	* from the beginning location of the map.
+	*
+	* @param end - the location to get the A* path to
+	* from the beginning location
+	* @return the stack of States from the beginning of the
+	* map (top of stack) to the end of the map (bottom of stack)
+	*/
+	public static Stack<GameState> AstarPath(GameState end) {
+		Stack<GameState> astarPath = new Stack<>();
+		GameState curr = null;
+		
+		//Do not add goal to path
+		if (end != null) {
+			curr = end.getParent();
+		}
+		
+		//Build path from end to beginning but disregard starting node
+		while (curr != null && curr.getParent() != null) {
+			astarPath.push(curr);
+			curr = curr.getParent();
+		}
+		
+		return astarPath;
 	}
 
 	public static void printPlan(List<GameState> plan, PrintStream writer) {

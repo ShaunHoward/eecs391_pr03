@@ -70,7 +70,7 @@ public class PlanAction implements StripsAction {
 		if (!preconditionsMet(state)) {
 			return null;
 		}
-		List<Condition> newconditions = new ArrayList<>(state.getState());
+		List<Condition> newConditions = new ArrayList<>(state.getConditions());
 		int numPeasants = state.numPeasants();
 		if (this.name.equalsIgnoreCase("BuildPeasant")) {
 			numPeasants++;
@@ -84,7 +84,9 @@ public class PlanAction implements StripsAction {
 			if (c.getValue("amt") != null) { // we need to increment the current
 			// value of a resource in the
 			// state list
-				for (Condition con : newconditions) {
+		    List<Condition> newConds = new ArrayList<>(newConditions);
+				
+				for (Condition con : newConds) {
 					if ((con.getName().equalsIgnoreCase("Has")
 							&& c.getName().equalsIgnoreCase("Has") // If
 																	// condition
@@ -101,13 +103,13 @@ public class PlanAction implements StripsAction {
 																				// peas
 						Condition newCondition = new Condition(con,
 								c.getVariables());
-						newconditions.remove(con);
-						newconditions.add(newCondition);
+						newConditions.remove(con);
+						newConditions.add(newCondition);
 						// con.getValue("amt").updateValue(c.getValue("amt"));
 						break;
 					}
 				}
-			} else if (!newconditions.contains(c)) {
+			} else if (!newConditions.contains(c)) {
 				if (this.name.equalsIgnoreCase("BuildPeasant")) { // need to
 																	// change
 																	// the
@@ -129,26 +131,26 @@ public class PlanAction implements StripsAction {
 						Condition newCondition = new Condition("Holding",
 								new Value[] { new Value(name, numPeasants),
 										new Value(Condition.NOTHING) });
-						newconditions.add(newCondition);
+						newConditions.add(newCondition);
 					} else if (c.getName().equalsIgnoreCase("At")) {
 						Condition newCondition = new Condition("At",
 								new Value[] { new Value(name, numPeasants),
 										new Value(Condition.TOWNHALL) });
-						newconditions.add(newCondition);
+						newConditions.add(newCondition);
 					}
 				} else {
-					newconditions.add(c);
+					newConditions.add(c);
 				}
 			}
 		}
 		// Remove the old state conditions.
 		for (Condition c : delete) {
 			// Condition applied = new Condition(c, values);
-			if (newconditions.contains(c)) {
-				newconditions.remove(c);
+			if (newConditions.contains(c)) {
+				newConditions.remove(c);
 			}
 		}
-		return new GameState(state, this, constants, newconditions, numPeasants);
+		return new GameState(state, this, constants, newConditions, numPeasants);
 	}
 
 	@Override
@@ -157,7 +159,7 @@ public class PlanAction implements StripsAction {
 			return false;
 		}
 		for (Condition c : preconditions) {
-			if (!state.getState().contains(c) || badMove(state)
+			if (!state.getConditions().contains(c) || badMove(state)
 					|| tooManyPeasants(state)) {
 				return false;
 			}
