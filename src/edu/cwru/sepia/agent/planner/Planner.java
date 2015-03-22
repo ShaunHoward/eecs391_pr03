@@ -9,21 +9,24 @@ import java.util.Stack;
 import edu.cwru.sepia.agent.planner.actions.StripsAction;
 
 public class Planner {
+	private List<PlanAction> availableActions;
 	private Stack<PlanAction> stripsActions;
 	private GameState startState;
 	private GameState goalState;
 
 	public Planner(List<PlanAction> availableActions, GameState startState,
 			GameState goalState) {
+		this.availableActions = availableActions;
 		Stack<PlanAction> actions = new Stack<>();
 		actions.addAll(availableActions);
-		this.stripsActions  = actions;
+		this.stripsActions = actions;
 		this.startState = startState;
 		this.goalState = goalState;
 	}
 
 	public Planner(Stack<PlanAction> stripsPlan, GameState initialState,
 			GameState goalState2) {
+		this.availableActions = new ArrayList<>(stripsPlan);
 		this.stripsActions = stripsPlan;
 		startState = initialState;
 		goalState = goalState2;
@@ -37,8 +40,8 @@ public class Planner {
 					.getValue();
 			List<GameState> goalPath = getPathToGoal(goalCondition,
 					plan.get(plan.size() - 1));
-			// plan.addAll(goalPath);
-			plan = new ArrayList<>(goalPath);
+			plan.addAll(goalPath);
+			// plan = new ArrayList<>(goalPath);
 		}
 		return plan;
 	}
@@ -55,6 +58,7 @@ public class Planner {
 			Collections.sort(states);
 			current = states.get(0);
 			states.remove(current);
+			System.out.println("Still in A star loop");
 		} while (!current.isGoal(goalCondition) && !states.isEmpty());
 		// Generate the list from the found state.
 		List<GameState> path = new ArrayList<>();
@@ -113,9 +117,25 @@ public class Planner {
 			}
 			addList.add(variable);
 		}
+		// List<PlanAction> validActions = new ArrayList<>();
+		// while(!stripsActions.isEmpty()) {
+		// List<PlanAction> possibleActions =
+		// stripsActions.pop().getPossibleActions(units, positions, types);
+		// inner: for (PlanAction action : possibleActions) {
+		// if (action.preconditionsMet(state)) {
+		// for (PlanAction existingAction : validActions) {
+		// if (existingAction.equals(action)) {
+		// continue inner;
+		// }
+		// }
+		// validActions.add(action);
+		// }
+		// }
+		// }
 		List<PlanAction> validActions = new ArrayList<>();
-		while(!stripsActions.isEmpty()) {
-			List<PlanAction> possibleActions = stripsActions.pop().getPossibleActions(units, positions, types);
+		for (PlanAction actionTemplate : availableActions) {
+			List<PlanAction> possibleActions = actionTemplate
+					.getPossibleActions(units, positions, types);
 			inner: for (PlanAction action : possibleActions) {
 				if (action.preconditionsMet(state)) {
 					for (PlanAction existingAction : validActions) {
