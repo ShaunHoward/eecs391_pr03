@@ -1,15 +1,12 @@
 package edu.cwru.sepia.agent.planner;
 
 import edu.cwru.sepia.action.Action;
-import edu.cwru.sepia.action.ActionType;
-import edu.cwru.sepia.action.LocatedAction;
-import edu.cwru.sepia.action.TargetedAction;
 import edu.cwru.sepia.agent.Agent;
 import edu.cwru.sepia.agent.planner.actions.*;
 import edu.cwru.sepia.environment.model.history.History;
 import edu.cwru.sepia.environment.model.state.ResourceNode.ResourceView;
 import edu.cwru.sepia.environment.model.state.ResourceNode.Type;
-import edu.cwru.sepia.environment.model.state.ResourceType;
+
 import edu.cwru.sepia.environment.model.state.State;
 import edu.cwru.sepia.environment.model.state.State.StateView;
 import edu.cwru.sepia.environment.model.state.Template;
@@ -35,7 +32,6 @@ public class PEAgent extends Agent {
 	// private Stack<StripsAction> plan = null;
 	int curState = 0;
 	List<GameState> plan;
-	Stack<PlanAction> stripsPlan;
 
 	// maps the real unit Ids to the plan's unit ids
 	// when you're planning you won't know the true unit IDs that sepia assigns.
@@ -48,12 +44,10 @@ public class PEAgent extends Agent {
 	private List<UnitView> peasants = new ArrayList<>();
 	private List<UnitView> townhalls = new ArrayList<>();
 
-	public PEAgent(int playernum, List<GameState> plan,
-			Stack<PlanAction> stripsPlan2) {
+	public PEAgent(int playernum, List<GameState> plan) {
 		super(playernum);
 		peasantIdMap = new HashMap<Integer, Integer>();
 		this.plan = plan;
-		this.stripsPlan = stripsPlan2;
 	}
 
 	@Override

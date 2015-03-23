@@ -29,10 +29,10 @@ public class PlanTester {
 		goalState = GameState.getGoalState(requiredGold, requiredWood);
 		System.out.println("got goal state");
 		planner = new Planner(actions, startState, goalState);
-		plan = planner.createPlan();
+//		plan = planner.createPlan();
 		System.out.println("got a plan");
-		System.out.println(plan.toString());
-		Planner.printPlan(plan, System.out);
+//		System.out.println(plan.toString());
+//		Planner.printPlan(plan, System.out);
 		System.out.println("reached the end");
 	}
 }
