@@ -20,13 +20,13 @@ public class MoveAction implements PlanAction {
     public Integer originId,   // id of resource node or null for town hall
                     destId;     // use nullable Integer instead of int
     private int makeSpan;       // cost of executing the action
-    public boolean isTownhall;
+    public boolean toTownhall;
 
-    public MoveAction(int k, PlanState s, Integer originId, Integer destId, boolean isTownhall) {
+    public MoveAction(int k, PlanState s, Integer originId, Integer destId, boolean toTownhall) {
         this.k = k;
         this.originId = originId;
         this.destId = destId;
-        this.isTownhall = isTownhall;
+        this.toTownhall = toTownhall;
         makeSpan = s.getResourceWithId(destId == null ? originId : destId).getDistance();
     }
 

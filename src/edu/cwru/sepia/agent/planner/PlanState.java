@@ -9,10 +9,14 @@ public class PlanState {
     public List<PlanResource> resources;
     public List<PlanPeasant> peasants;
     public PlanAction parentAction;
+    public int x;
+    public int y;
 
     public PlanState(int gold, int wood) {
         this.gold = gold;
         this.wood = wood;
+        this.x = x;
+        this.y = y;
         resources = new ArrayList<PlanResource>();
         peasants = new ArrayList<PlanPeasant>();
     }

@@ -197,7 +197,7 @@ public class PlannerAgent extends Agent {
 		for (PlanResource resource : s.resources) {
 			int resId = resource.getId();
 			for (int i = 1; i <= maxPeasants; i++) {
-				actions.add(new MoveAction(i, s, null, resId, false));
+				actions.add(new MoveAction(i, s, null, resId, true));
 				actions.add(new GatherAction(i, resId, resource.getX(),
 						resource.getY()));
 				actions.add(new MoveAction(i, s, resId, null, false));

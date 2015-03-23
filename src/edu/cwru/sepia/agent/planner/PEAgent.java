@@ -167,14 +167,17 @@ public class PEAgent extends Agent {
                                                                 mAction.getDestId() :
                                                                 mAction.getOriginId());
             boolean done = false;
-            boolean toTownHall = mAction.getDestId() == null;
+            boolean toTownHall = mAction.toTownhall;
             int i = 0, j = 0;
             int originX, originY, destX, destY;
+            
+            //Have to set destination id to resources, unless we are traveling to the townhall
             if(toTownHall) {
                 originX = resource.getX();
                 originY = resource.getY();
                 destX = townHallUnit.getXPosition();
                 destY = townHallUnit.getYPosition();
+                System.out.println("The townhall rules all destinations!");
             } else {
             	System.out.println("townhall is not everything!");
                 originX = townHallUnit.getXPosition();
