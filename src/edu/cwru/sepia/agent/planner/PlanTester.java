@@ -2,11 +2,11 @@ package edu.cwru.sepia.agent.planner;
 
 import java.util.List;
 
+//right now, this doesn't do anything
 public class PlanTester {
 	public static void main(String[] args) {
 		List<PlanAction> actions;
 		GameState startState, goalState;
-		Planner planner;
 		List<GameState> plan;
 		int peasantId = 0;
 		int requiredGold = 200;
@@ -28,11 +28,7 @@ public class PlanTester {
 		System.out.println("got initial state");
 		goalState = GameState.getGoalState(requiredGold, requiredWood);
 		System.out.println("got goal state");
-		planner = new Planner(actions, startState, goalState);
-//		plan = planner.createPlan();
 		System.out.println("got a plan");
-//		System.out.println(plan.toString());
-//		Planner.printPlan(plan, System.out);
 		System.out.println("reached the end");
 	}
 }

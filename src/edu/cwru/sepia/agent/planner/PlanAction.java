@@ -70,7 +70,7 @@ public class PlanAction implements StripsAction {
 		if (!preconditionsMet(state)) {
 			return null;
 		}
-		List<Condition> newconditions = new ArrayList<>(state.getState());
+		List<Condition> newconditions = new ArrayList<>(state.getConditions());
 		int numPeasants = state.numPeasants();
 		if (this.name.equalsIgnoreCase("BuildPeasant")) {
 			numPeasants++;
@@ -157,7 +157,7 @@ public class PlanAction implements StripsAction {
 			return false;
 		}
 		for (Condition c : preconditions) {
-			if (!state.getState().contains(c) || badMove(state)
+			if (!state.getConditions().contains(c) || badMove(state)
 					|| tooManyPeasants(state)) {
 				return false;
 			}

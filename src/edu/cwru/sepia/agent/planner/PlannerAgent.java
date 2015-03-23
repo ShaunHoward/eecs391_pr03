@@ -2,7 +2,6 @@ package edu.cwru.sepia.agent.planner;
 
 import edu.cwru.sepia.action.Action;
 import edu.cwru.sepia.agent.Agent;
-import edu.cwru.sepia.agent.planner.actions.StripsAction;
 import edu.cwru.sepia.environment.model.history.History;
 import edu.cwru.sepia.environment.model.state.State;
 import edu.cwru.sepia.environment.model.state.Unit.UnitView;
@@ -19,11 +18,17 @@ public class PlannerAgent extends Agent {
 		WOODSMALL2 = 1000, GOLDSMALL2 = 1000, WOODLARGE1 = 1000,
 		GOLDLARGE1 = 1000, WOODLARGE2 = 2000, GOLDLARGE2 = 3000;
 	
+	//The required goal criteria
 	final int requiredWood;
 	final int requiredGold;
+	
+	//Whether multiple peasants will be built
 	final boolean buildPeasants;
 	
+	//The actions possible in a given state
 	private Stack<PlanAction> availableActions;
+	
+	//The scenario number based on required goal criteria
 	final int scenario;
 
 	// Your PEAgent implementation. This prevents you from having to parse the
@@ -51,7 +56,7 @@ public class PlannerAgent extends Agent {
 
 	public int generateScenario(){
 		
-		if (requiredWood == WOODSMALL1 && requiredGold == GOLDSMALL1){
+		if (requiredWood <= WOODSMALL1 && requiredGold <= GOLDSMALL1){
 			return 1;
 		} else  if (requiredWood <= WOODSMALL2 && requiredGold <= GOLDSMALL2){
 			return 2;
@@ -129,14 +134,20 @@ public class PlannerAgent extends Agent {
 	}
 
 	/**
-	 * Perform an A* search of the game graph. This should return your plan as a
-	 * stack of actions. This is essentially the same as your first assignment.
-	 * The implementations should be very similar. The difference being that
-	 * your nodes are now GameState objects not MapLocation objects.
+	 * Determines a forward state-space plan from an initial state. 
+	 * The possible actions are generated based on the scenario number, which
+	 * is determined by the required goal constraints. 
+	 * 
+	 * Each of the conditions that must be met to reach the goal state are 
+	 * planned for with A*. Once the path to the goal for all conditions are met,
+	 * the plan is returned as a stack of game states.
+	 * 
+	 * Each game state has all the conditions, variables, and actions in it necessary
+	 * to successfully execute the plan.
 	 *
 	 * @param startState
 	 *            The state which is being planned from
-	 * @return The plan or null if no plan is found.
+	 * @return The plan of game states or null if no plan is found.
 	 */
 	private Stack<GameState> AstarSearch(GameState startState) {
 		Stack<PlanAction> possibleActions = new Stack<>();
@@ -147,7 +158,7 @@ public class PlannerAgent extends Agent {
 		plan.add(startState);
 		
 		//fulfill all goals
-		for (Condition goalCondition : goalState.getState()) {
+		for (Condition goalCondition : goalState.getConditions()) {
 			//determine if the current goal is to harvest gold
 			GameState.isGold = goalCondition.getValue("type").getValue() == Condition.GOLD
 					.getValue();
@@ -173,7 +184,7 @@ public class PlannerAgent extends Agent {
 		List<GameState> states = new ArrayList<>();
 		GameState current = currentState;
 		do {
-			states.addAll(getNextStates(current));
+			states.addAll(current.generateChildren(current, availableActions));
 			// A* is being performed here, since the State.compareTo() is
 			// comparing states based on their heuristic values
 			Collections.sort(states);
@@ -183,94 +194,16 @@ public class PlannerAgent extends Agent {
 			System.out.println("Still in A star loop");
 		} while (!current.isGoal(goalCondition) && !states.isEmpty());
 		
-		// Make the path from beginning to end
-		List<GameState> path = new Stack<>();
-		while (current.getParent() != null) {
-			path.add(0, current);
-			current = current.getParent();
-		}
-		return path;
-	}
-
-	private List<GameState> getNextStates(GameState currentState) {
-		List<PlanAction> possibleActions = generatePossibleActions(currentState);
-		List<GameState> nextStates = new ArrayList<>();
-		for (PlanAction action : possibleActions) {
-			nextStates.add(action.apply(currentState));
-		}
-		return nextStates;
-	}
-
-	public List<PlanAction> generatePossibleActions(GameState state) {
-		List<Value> variables = new ArrayList<>();
-		for (Condition condition : state.getState()) {
-			variables.addAll(condition.getVariables());
-		}
-		List<Value> units = new ArrayList<>();
-		List<Value> positions = new ArrayList<>();
-		List<Value> types = new ArrayList<>();
-		outer: for (Value variable : variables) {
-			if (variable == null || variable.getName().isEmpty()) {
-				continue;
+		if (current.isGoal(goalCondition)){
+			// Make the path from beginning to end
+			List<GameState> path = new Stack<>();
+			while (current.getParent() != null) {
+				path.add(0, current);
+				current = current.getParent();
 			}
-			List<Value> addList = null;
-			if (variable.getName().equalsIgnoreCase("first")
-					|| variable.getName().equalsIgnoreCase("second")
-					|| variable.getName().equalsIgnoreCase("third")) {
-				addList = units;
-			} else if (variable.getName().equalsIgnoreCase("pos")
-					|| variable.getName().equalsIgnoreCase("to")
-					|| variable.getName().equalsIgnoreCase("from")) {
-				addList = positions;
-			} else if (variable.getName().equalsIgnoreCase("type")) {
-				addList = types;
-			} else if (variable.getName().equalsIgnoreCase("amt")) {
-				continue;
-			}
-			if (addList == null) {
-				System.out.println("Unrecognized variable name!!! "
-						+ variable.getName());
-				continue;
-			}
-			for (Value var : addList) {
-				if (variable.getName().equals(var.getName())
-						&& variable.equals(var)) {
-					continue outer;
-				}
-			}
-			addList.add(variable);
+			return path;
 		}
-		// List<PlanAction> validActions = new ArrayList<>();
-		// while(!stripsActions.isEmpty()) {
-		// List<PlanAction> possibleActions =
-		// stripsActions.pop().getPossibleActions(units, positions, types);
-		// inner: for (PlanAction action : possibleActions) {
-		// if (action.preconditionsMet(state)) {
-		// for (PlanAction existingAction : validActions) {
-		// if (existingAction.equals(action)) {
-		// continue inner;
-		// }
-		// }
-		// validActions.add(action);
-		// }
-		// }
-		// }
-		List<PlanAction> validActions = new ArrayList<>();
-		for (PlanAction actionTemplate : availableActions) {
-			List<PlanAction> possibleActions = actionTemplate
-					.getPossibleActions(units, positions, types);
-			inner: for (PlanAction action : possibleActions) {
-				if (action.preconditionsMet(state)) {
-					for (PlanAction existingAction : validActions) {
-						if (existingAction.equals(action)) {
-							continue inner;
-						}
-					}
-					validActions.add(action);
-				}
-			}
-		}
-		return validActions;
+		return null;
 	}
 
 	public static void printPlan(List<GameState> plan, PrintStream writer) {

@@ -40,7 +40,7 @@ public class GameState implements Comparable<GameState> {
 	private boolean weightSet;
 	private PlanAction fromParent;
 	private List<Value> valuesFromParent;
-	private List<Condition> state;
+	private List<Condition> conditions;
 	private GameState initialState;
 	private int numPeasants = 1;
 
@@ -79,7 +79,7 @@ public class GameState implements Comparable<GameState> {
 		 this.weightSet = false;
 		 this.fromParent = null;
 		 this.valuesFromParent = null;
-		 this.state = initialState;
+		 this.conditions = initialState;
 	}
 	 
     public GameState(GameState parent, PlanAction action, List<Value> values, List<Condition> state, int numPeasants) {
@@ -87,7 +87,7 @@ public class GameState implements Comparable<GameState> {
 		 this.depth = parent.depth + 1;
 		 this.fromParent = action;
 		 this.valuesFromParent = values;
-		 this.state = state;
+		 this.conditions = state;
 		 this.numPeasants = numPeasants;
 	}
     
@@ -96,7 +96,7 @@ public class GameState implements Comparable<GameState> {
     	this.depth = orig.depth;
     	this.fromParent = orig.fromParent;
     	this.valuesFromParent = orig.valuesFromParent;
-    	this.state = orig.state;
+    	this.conditions = orig.conditions;
     	this.numPeasants = orig.numPeasants;
     }
 
@@ -111,7 +111,7 @@ public class GameState implements Comparable<GameState> {
 	 *         state.
 	 */
 	public boolean isGoal(Condition goal) {
-		return state.contains(goal);
+		return conditions.contains(goal);
 	}
 
 	public static GameState getGoalState(int requiredGold, int requiredWood) {
@@ -139,9 +139,85 @@ public class GameState implements Comparable<GameState> {
 	 * @return A list of the possible successor states and their associated
 	 *         actions
 	 */
-	public List<GameState> generateChildren() {
-		// TODO: Implement me!
-		return null;
+	public List<GameState> generateChildren(GameState currentState, List<PlanAction> availableActions) {
+		List<PlanAction> possibleActions = generatePossibleActions(currentState, availableActions);
+		List<GameState> nextStates = new ArrayList<>();
+		for (PlanAction action : possibleActions) {
+			nextStates.add(action.apply(currentState));
+		}
+		return nextStates;
+	}
+	
+	public List<PlanAction> generatePossibleActions(GameState state, List<PlanAction> availableActions) {
+		List<Value> variables = new ArrayList<>();
+		for (Condition condition : state.getConditions()) {
+			variables.addAll(condition.getVariables());
+		}
+		List<Value> units = new ArrayList<>();
+		List<Value> positions = new ArrayList<>();
+		List<Value> types = new ArrayList<>();
+		outer: for (Value variable : variables) {
+			if (variable == null || variable.getName().isEmpty()) {
+				continue;
+			}
+			List<Value> addList = null;
+			if (variable.getName().equalsIgnoreCase("first")
+					|| variable.getName().equalsIgnoreCase("second")
+					|| variable.getName().equalsIgnoreCase("third")) {
+				addList = units;
+			} else if (variable.getName().equalsIgnoreCase("pos")
+					|| variable.getName().equalsIgnoreCase("to")
+					|| variable.getName().equalsIgnoreCase("from")) {
+				addList = positions;
+			} else if (variable.getName().equalsIgnoreCase("type")) {
+				addList = types;
+			} else if (variable.getName().equalsIgnoreCase("amt")) {
+				continue;
+			}
+			if (addList == null) {
+				System.out.println("Unrecognized variable name!!! "
+						+ variable.getName());
+				continue;
+			}
+			for (Value var : addList) {
+				if (variable.getName().equals(var.getName())
+						&& variable.equals(var)) {
+					continue outer;
+				}
+			}
+			addList.add(variable);
+		}
+		// List<PlanAction> validActions = new ArrayList<>();
+		// while(!stripsActions.isEmpty()) {
+		// List<PlanAction> possibleActions =
+		// stripsActions.pop().getPossibleActions(units, positions, types);
+		// inner: for (PlanAction action : possibleActions) {
+		// if (action.preconditionsMet(state)) {
+		// for (PlanAction existingAction : validActions) {
+		// if (existingAction.equals(action)) {
+		// continue inner;
+		// }
+		// }
+		// validActions.add(action);
+		// }
+		// }
+		// }
+		List<PlanAction> validActions = new ArrayList<>();
+		for (PlanAction actionTemplate : availableActions) {
+			List<PlanAction> possibleActions = actionTemplate
+					.getPossibleActions(units, positions, types);
+			inner: for (PlanAction action : possibleActions) {
+				if (action.preconditionsMet(state)) {
+					for (PlanAction existingAction : validActions) {
+						if (existingAction.equals(action)) {
+							continue inner;
+						}
+					}
+					validActions.add(action);
+				}
+			}
+		}
+		return validActions;
 	}
 
 	public static GameState generateInitialState(int peasantId, int requiredGold, int requiredWood, boolean buildPeasants) {
@@ -207,7 +283,7 @@ public class GameState implements Comparable<GameState> {
 	}
 
 	int numPeasants() {
-		for (Condition c : state) {
+		for (Condition c : conditions) {
 			if (c.getName().equals("Numpeas")) {
 				return c.getValue(0).getValue();
 			}
@@ -217,7 +293,7 @@ public class GameState implements Comparable<GameState> {
 
 	private int getValue() {
 		int id = isGold ? 11 : 12;
-		for (Condition c : state) {
+		for (Condition c : conditions) {
 			if (c.getName().equals("Has") && c.getValue(0).getValue() == id) {
 				return c.getValue(1).getValue();
 			}
@@ -273,10 +349,10 @@ public class GameState implements Comparable<GameState> {
 			return false;
 		}
 		GameState s = (GameState) o;
-		List<Condition> conds = new ArrayList<>(s.state);
-		for (Condition c : state) {
+		List<Condition> conds = new ArrayList<>(s.conditions);
+		for (Condition c : conditions) {
 			boolean isIn = false;
-			for (Condition c2 : s.state) {
+			for (Condition c2 : s.conditions) {
 				if (c.equals(c2)) {
 					isIn = true;
 					conds.remove(c2);
@@ -299,12 +375,12 @@ public class GameState implements Comparable<GameState> {
 	 */
 	@Override
 	public int hashCode() {
-		int hash = (int) (31 * getCost() * state.size());
+		int hash = (int) (31 * getCost() * conditions.size());
 		return hash;
 	}
 	
-	 public List<Condition> getState() {
-		 return this.state;
+	 public List<Condition> getConditions() {
+		 return this.conditions;
      }
 	 
 	 public PlanAction getFromParent() {
@@ -314,4 +390,12 @@ public class GameState implements Comparable<GameState> {
 	public int getDepth() {
 		return this.depth;
 	}
+	
+	@Override
+public String toString() {
+	if (valuesFromParent == null) {
+		return "State depth: " + depth + ", cost: " + getCost();
+	}
+	return "State depth: " + depth + ", from " + fromParent + ", cost: " + getCost() + "\n" + valuesFromParent.toString();
+}
 }
