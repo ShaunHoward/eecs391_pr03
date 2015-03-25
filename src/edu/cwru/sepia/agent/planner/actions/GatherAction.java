@@ -1,4 +1,9 @@
-package edu.cwru.sepia.agent.planner;
+package edu.cwru.sepia.agent.planner.actions;
+
+import edu.cwru.sepia.agent.planner.PlanPeasant;
+import edu.cwru.sepia.agent.planner.PlanResource;
+import edu.cwru.sepia.agent.planner.PlanState;
+
 public class GatherAction implements PlanAction {
 
     /**
@@ -21,7 +26,7 @@ public class GatherAction implements PlanAction {
     }
 
     @Override
-    public boolean isAllowedFor(PlanState s, PlanState goal) {
+    public boolean preconditionsMet(PlanState s, PlanState goal) {
         int i = 0;
         if(s.peasants.size() >= k && s.getResourceWithId(targetId).getAmount() > 0) {
             for(PlanPeasant peasant: s.peasants)
@@ -31,7 +36,7 @@ public class GatherAction implements PlanAction {
     }
 
     @Override
-    public PlanState applyTo(PlanState s) {
+    public PlanState apply(PlanState s) {
         int i = 0;
         PlanState newState = new PlanState(s);
         PlanResource res = newState.getResourceWithId(targetId);

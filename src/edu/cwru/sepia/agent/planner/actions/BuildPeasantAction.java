@@ -1,4 +1,8 @@
-package edu.cwru.sepia.agent.planner;
+package edu.cwru.sepia.agent.planner.actions;
+
+import edu.cwru.sepia.agent.planner.PlanPeasant;
+import edu.cwru.sepia.agent.planner.PlanState;
+
 public class BuildPeasantAction implements PlanAction {
 
     /**
@@ -9,12 +13,12 @@ public class BuildPeasantAction implements PlanAction {
     **/
 
     @Override
-    public boolean isAllowedFor(PlanState s, PlanState goal) {
+    public boolean preconditionsMet(PlanState s, PlanState goal) {
         return s.gold >= 400 && s.peasants.size() < 3;
     }
 
     @Override
-    public PlanState applyTo(PlanState s) {
+    public PlanState apply(PlanState s) {
         PlanState newState = new PlanState(s);
         newState.peasants.add(new PlanPeasant());
         newState.gold -= 400;

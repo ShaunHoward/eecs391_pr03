@@ -1,6 +1,7 @@
 package edu.cwru.sepia.agent.planner.actions;
 
 import edu.cwru.sepia.agent.planner.GameState;
+import edu.cwru.sepia.agent.planner.PlanState;
 
 /**
  * A useful start of an interface representing strips actions. You may add new methods to this interface if needed, but
@@ -22,7 +23,7 @@ public interface StripsAction {
      * @param state GameState to check if action is applicable
      * @return true if apply can be called, false otherwise
      */
-    public boolean preconditionsMet(GameState state);
+    public boolean preconditionsMet(GameState state, GameState goal);
 
     /**
      * Applies the action instance to the given GameState producing a new GameState in the process.
@@ -37,4 +38,12 @@ public interface StripsAction {
      * @return State resulting from successful action application.
      */
     public GameState apply(GameState state);
+    
+    /**
+     * Gets the make span of this action in order to calculate an
+     * effective heuristic.
+     * 
+     * @return the make span of the action, i.e the time it takes to execute
+     */
+    public int getMakeSpan();
 }

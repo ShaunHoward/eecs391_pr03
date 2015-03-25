@@ -1,5 +1,9 @@
-package edu.cwru.sepia.agent.planner;
+package edu.cwru.sepia.agent.planner.actions;
+import edu.cwru.sepia.agent.planner.PlanPeasant;
+import edu.cwru.sepia.agent.planner.PlanResource;
+import edu.cwru.sepia.agent.planner.PlanState;
 import edu.cwru.sepia.environment.model.state.ResourceNode;
+
 import org.omg.DynamicAny._DynSequenceStub;
 
 public class MoveAction implements PlanAction {
@@ -31,7 +35,7 @@ public class MoveAction implements PlanAction {
     }
 
     @Override
-    public boolean isAllowedFor(PlanState s, PlanState goal) {
+    public boolean preconditionsMet(PlanState s, PlanState goal) {
         int i = 0;
         if(destId != null) { // do not allow move to empty resource node, and gather gold before wood
             PlanResource resource = s.getResourceWithId(destId);
@@ -47,7 +51,7 @@ public class MoveAction implements PlanAction {
     }
 
     @Override
-    public PlanState applyTo(PlanState s) {
+    public PlanState apply(PlanState s) {
         int i = 0;
         PlanState newState = new PlanState(s);
         for(PlanPeasant peasant: newState.peasants)

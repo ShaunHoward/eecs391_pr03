@@ -2,6 +2,11 @@ package edu.cwru.sepia.agent.planner;
 
 import edu.cwru.sepia.action.Action;
 import edu.cwru.sepia.agent.Agent;
+import edu.cwru.sepia.agent.planner.actions.BuildPeasantAction;
+import edu.cwru.sepia.agent.planner.actions.DepositAction;
+import edu.cwru.sepia.agent.planner.actions.GatherAction;
+import edu.cwru.sepia.agent.planner.actions.MoveAction;
+import edu.cwru.sepia.agent.planner.actions.PlanAction;
 import edu.cwru.sepia.agent.planner.actions.StripsAction;
 import edu.cwru.sepia.environment.model.history.History;
 import edu.cwru.sepia.environment.model.state.ResourceType;
@@ -254,8 +259,8 @@ public class PlannerAgent extends Agent {
 	private static List<PlanState> getNeighbors(PlanState s, PlanState goal) {
 		ArrayList<PlanState> result = new ArrayList<PlanState>();
 		for (PlanAction a : actions)
-			if (a.isAllowedFor(s, goal))
-				result.add(a.applyTo(s));
+			if (a.preconditionsMet(s, goal))
+				result.add(a.apply(s));
 		return result;
 	}
 

@@ -1,5 +1,6 @@
 package edu.cwru.sepia.agent.planner;
 
+import edu.cwru.sepia.agent.planner.actions.PlanAction;
 import edu.cwru.sepia.environment.model.state.State;
 
 import java.util.ArrayList;
@@ -28,29 +29,18 @@ import java.util.List;
  */
 public class GameState implements Comparable<GameState> {
 
-	private static int GoldValue;
-	private static int WoodValue;
-	private static int requiredWood;
-	private static int requiredGold;
-	public static boolean isGold;
-
-	private GameState parent;
+	public int gold, wood;
+	public List<PlanResource> resources;
+	public List<PlanPeasant> peasants;
+	public PlanAction parentAction;
+	public int x;
+	public int y;
 	private int depth;
 	private int weight;
 	private boolean weightSet;
-	private PlanAction fromParent;
 	private List<Value> valuesFromParent;
 	private List<Condition> state;
 	private GameState initialState;
-	private int numPeasants = 1;
-
-	public int getNumPeasants() {
-		return numPeasants;
-	}
-
-	public void setNumPeasants(int numPeasants) {
-		this.numPeasants = numPeasants;
-	}
 
 	/**
 	 * Construct a GameState from a stateview object. This is used to construct
@@ -70,35 +60,59 @@ public class GameState implements Comparable<GameState> {
 	 */
 	public GameState(State.StateView state, int playernum, int requiredGold,
 			int requiredWood, boolean buildPeasants) {
-		 this(generateInitialState(playernum, requiredGold, requiredWood, buildPeasants));
+		// make new state here
 	}
-	
+
 	public GameState(List<Condition> initialState) {
-		 this.parent = null;
-		 this.depth = 0;
-		 this.weightSet = false;
-		 this.fromParent = null;
-		 this.valuesFromParent = null;
-		 this.state = initialState;
+		this.depth = 0;
+		this.weightSet = false;
+		this.parentAction = null;
+		this.valuesFromParent = null;
+		this.state = initialState;
 	}
-	 
-    public GameState(GameState parent, PlanAction action, List<Value> values, List<Condition> state, int numPeasants) {
-		 this.parent = parent;
-		 this.depth = parent.depth + 1;
-		 this.fromParent = action;
-		 this.valuesFromParent = values;
-		 this.state = state;
-		 this.numPeasants = numPeasants;
+
+	public GameState(GameState parent, PlanAction action, List<Value> values,
+			List<Condition> state) {
+		this.depth = parent.depth + 1;
+		this.parentAction = action;
+		this.valuesFromParent = values;
+		this.state = state;
 	}
-    
-    public GameState(GameState orig){
-    	this.parent = orig.parent;
-    	this.depth = orig.depth;
-    	this.fromParent = orig.fromParent;
-    	this.valuesFromParent = orig.valuesFromParent;
-    	this.state = orig.state;
-    	this.numPeasants = orig.numPeasants;
-    }
+
+	// public GameState(GameState orig){
+	// this.depth = orig.depth;
+	// this.parentAction = orig.parentAction;
+	// this.valuesFromParent = orig.valuesFromParent;
+	// this.state = orig.state;
+	// }
+
+	public GameState(int gold, int wood) {
+		this.gold = gold;
+		this.wood = wood;
+		this.x = x;
+		this.y = y;
+		resources = new ArrayList<PlanResource>();
+		peasants = new ArrayList<PlanPeasant>();
+	}
+
+	// constructor for cloning another PlanState
+	public GameState(GameState parent) {
+		this(parent.gold, parent.wood);
+		// clone each resource
+		for (PlanResource resource : parent.resources) {
+			this.resources.add(new PlanResource(resource));
+		}
+		// clone each peasant and maintain reference to cloned resource if
+		// needed
+		for (PlanPeasant peasant : parent.peasants) {
+			PlanPeasant newPeasant = new PlanPeasant();
+			newPeasant.setCargo(peasant.getCargo());
+			PlanResource nextTo = peasant.getNextTo();
+			if (nextTo != null)
+				newPeasant.setNextTo(getResourceWithId(nextTo.getId()));
+			peasants.add(newPeasant);
+		}
+	}
 
 	/**
 	 * Unlike in the first A* assignment there are many possible goal states. As
@@ -114,23 +128,6 @@ public class GameState implements Comparable<GameState> {
 		return state.contains(goal);
 	}
 
-	public static GameState getGoalState(int requiredGold, int requiredWood) {
-		List<Condition> conditions = new ArrayList<>();
-
-		// Add condition Has(Gold, AMT)
-		conditions.add(new Condition(Condition.HAS, Arrays.asList(new Value[] {
-				new Value(Condition.GOLD), new Value("amt", requiredGold) })));
-		// Add condition Has(Wood, AMT)
-		conditions.add(new Condition(Condition.HAS, Arrays.asList(new Value[] {
-				new Value(Condition.WOOD), new Value("amt", requiredWood) })));
-		GameState newState = new GameState(conditions);
-		GameState.GoldValue = requiredGold;
-		GameState.WoodValue = requiredWood;
-		GameState.requiredGold = requiredGold;
-		GameState.requiredWood = requiredWood;
-		return newState;
-	}
-
 	/**
 	 * The branching factor of this search graph are much higher than the
 	 * planning. Generate all of the possible successor states and their
@@ -142,52 +139,6 @@ public class GameState implements Comparable<GameState> {
 	public List<GameState> generateChildren() {
 		// TODO: Implement me!
 		return null;
-	}
-
-	public static GameState generateInitialState(int peasantId, int requiredGold, int requiredWood, boolean buildPeasants) {
-		List<Condition> conditions = new ArrayList<>();
-		// Add condition Holding(Peasant1, Nothing)
-		conditions.add(new Condition(Condition.HOLDING, Arrays
-				.asList(new Value[] { new Value("first", peasantId),
-						new Value(Condition.NOTHING) })));
-		// Add condition At(peasent1, Townhall)
-		conditions
-				.add(new Condition(Condition.AT, Arrays.asList(new Value[] {
-						new Value("first", peasantId),
-						new Value(Condition.TOWNHALL) })));
-		// Add condition Has(wood, 0)
-		conditions
-				.add(new Condition(Condition.HAS, Arrays.asList(new Value[] {
-						new Value(Condition.WOOD),
-						new Value("amt", Value.Type.ADD) })));
-		// Add condition Has(gold, 0)
-		conditions
-				.add(new Condition(Condition.HAS, Arrays.asList(new Value[] {
-						new Value(Condition.GOLD),
-						new Value("amt", Value.Type.ADD) })));
-		// Add condition Contains(Goldmine, gold)
-		conditions.add(new Condition(Condition.CONTAINS, Arrays
-				.asList(new Value[] { new Value(Condition.GOLDMINE),
-						new Value(Condition.GOLD) })));
-		// Add condition Contains(Forest, wood)
-		conditions.add(new Condition(Condition.CONTAINS, Arrays
-				.asList(new Value[] { new Value(Condition.FOREST),
-						new Value(Condition.WOOD) })));
-		// Add condition Hall(Townhall)
-		conditions.add(new Condition(Condition.HALL, Arrays
-				.asList(new Value[] { new Value(Condition.TOWNHALL) })));
-		// Add condition Numpeas(numpeas)
-		conditions.add(new Condition(Condition.NUMPEAS, Arrays
-				.asList(new Value[] { new Value("amt", 1, Value.Type.ADD) })));
-		GameState newState = new GameState(conditions);
-		GameState.GoldValue = 0;
-		GameState.WoodValue = 0;
-		GameState.requiredGold = requiredGold;
-		GameState.requiredWood = requiredWood;
-		if (buildPeasants == true){
-			newState.setNumPeasants(3);
-		}
-		return newState;
 	}
 
 	/**
@@ -202,32 +153,13 @@ public class GameState implements Comparable<GameState> {
 	 *         this state.
 	 */
 	public double heuristic() {
-		int goal = isGold ? GoldValue : WoodValue;
-		return (goal - getValue()) / (100 * numPeasants());
+		return depth;
+
 	}
 
-	int numPeasants() {
-		for (Condition c : state) {
-			if (c.getName().equals("Numpeas")) {
-				return c.getValue(0).getValue();
-			}
-		}
-		return -1;
+	int getPeasantCount() {
+		return peasants.size();
 	}
-
-	private int getValue() {
-		int id = isGold ? 11 : 12;
-		for (Condition c : state) {
-			if (c.getName().equals("Has") && c.getValue(0).getValue() == id) {
-				return c.getValue(1).getValue();
-			}
-		}
-		return -1;
-	}
-	
-	 public GameState getParent() {
-		 return this.parent;
-     }
 
 	/**
 	 *
@@ -238,11 +170,25 @@ public class GameState implements Comparable<GameState> {
 	 * @return The current cost to reach this goal
 	 */
 	public double getCost() {
-		if (!weightSet) {
-			weight = (int) (depth + heuristic());
-			weightSet = true;
-		}
-		return weight;
+		return depth;
+	}
+
+	public PlanResource getResourceWithId(int id) {
+		for (PlanResource resource : resources)
+			if (resource.getId() == id)
+				return resource;
+		System.out.println("No resource with id " + id);
+		return null;
+	}
+
+	@Override
+	public String toString() {
+		String str = "G:" + gold + ", W:" + wood;
+		if (peasants.size() > 0)
+			str += " P:" + peasants;
+		if (resources.size() > 0)
+			str += " R:" + resources;
+		return str;
 	}
 
 	/**
@@ -302,14 +248,14 @@ public class GameState implements Comparable<GameState> {
 		int hash = (int) (31 * getCost() * state.size());
 		return hash;
 	}
-	
-	 public List<Condition> getState() {
-		 return this.state;
-     }
-	 
-	 public PlanAction getFromParent() {
-		 return this.fromParent;
-		 }
+
+	public List<Condition> getState() {
+		return this.state;
+	}
+
+	public PlanAction getFromParent() {
+		return this.parentAction;
+	}
 
 	public int getDepth() {
 		return this.depth;
