@@ -96,7 +96,7 @@ public class PEAgent extends Agent {
         // pass initial and goal states to planner and get a plan
       //  plan = PlannerAgent.AstarSearch(initial, goal, fileName);
         // remove initial state since we are already here
-        plan.removeFirst();
+      //  plan.removeFirst();
         System.out.println("Executing plan");
         
         
@@ -159,6 +159,10 @@ public class PEAgent extends Agent {
             String typeName = unit.getTemplateView().getName();
             if(typeName.equals("Peasant")) peasants.add(id);
         }
+        
+        System.out.println("Current action is: " + pAction.toString());
+        
+
 
         if(pAction instanceof MoveAction) {
             MoveAction mAction = (MoveAction) pAction;
@@ -213,6 +217,7 @@ public class PEAgent extends Agent {
         }
 
         if(pAction instanceof GatherAction) {
+        	System.out.println("Got to gather action");
             GatherAction gAction = (GatherAction) pAction;
             boolean done = false;
             int i = 0;
@@ -273,6 +278,17 @@ public class PEAgent extends Agent {
             }
         }
         return actions;
+	}
+	
+	/**
+	 * Returns a SEPIA version of the specified Strips Action.
+	 * 
+	 * @param action
+	 *            StripsAction
+	 * @return SEPIA representation of same action
+	 */
+	private Action createSepiaAction(StripsAction action) {
+		return null;
 	}
 	
     private boolean isAdjacent(int x1, int y1, int x2, int y2) {
@@ -412,16 +428,7 @@ public class PEAgent extends Agent {
 		return closestResource;
 	}
 
-	/**
-	 * Returns a SEPIA version of the specified Strips Action.
-	 * 
-	 * @param action
-	 *            StripsAction
-	 * @return SEPIA representation of same action
-	 */
-	private Action createSepiaAction(StripsAction action) {
-		return null;
-	}
+
 
 	/**
 	 * Primitive actions take a direction (e.g. NORTH, NORTHEAST, etc) This

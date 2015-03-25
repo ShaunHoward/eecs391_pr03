@@ -103,7 +103,6 @@ public class PlannerAgent extends Agent {
 		plan.removeFirst();
 		peAgent = new PEAgent(playernum, plan, requiredGold, requiredWood,
 				buildPeasants);
-		System.out.println("Executing plan");
 		// for(PlanState s: plan)
 		// System.out.println(s.parentAction + " -> " + s);
 
@@ -126,6 +125,9 @@ public class PlannerAgent extends Agent {
 			PlanState goal, String fileName) {
 		System.out.println("Planner initialized for:\n" + "\tInitial: "
 				+ initial + "\n" + "\tGoal: " + goal);
+		//Limit the depth at 15
+		int depth = 400;
+		System.out.println("Search depth will be limited to: " + depth);
 
 		registerActions(initial, goal.peasants.size());
 
@@ -147,11 +149,12 @@ public class PlannerAgent extends Agent {
 		fScore.put(initial, getHScore(initial, goal));
 
 		while (open.size() > 0) {
+			depth--;
 			PlanState current = getMinVal(fScore, open);
 //			current.parentAction.
 //			current.parentAction.d
 			// return the least cost path if the end has been reached
-			if (goalTest(current, goal)) {
+			if (goalTest(current, goal) || depth == 0) {
 				System.out.println("Plan complete");
 				LinkedList<PlanState> result = buildPath(parents, current);
 				fileName = "/home/shaun/workspace/eecs391_pr03/textPlan/test.txt";
@@ -197,10 +200,10 @@ public class PlannerAgent extends Agent {
 		for (PlanResource resource : s.resources) {
 			int resId = resource.getId();
 			for (int i = 1; i <= maxPeasants; i++) {
-				actions.add(new MoveAction(i, s, null, resId, true));
+				actions.add(new MoveAction(i, s, null, resId, false));
 				actions.add(new GatherAction(i, resId, resource.getX(),
 						resource.getY()));
-				actions.add(new MoveAction(i, s, resId, null, false));
+				actions.add(new MoveAction(i, s, resId, null, true));
 			}
 		}
 		// deposit cargo
