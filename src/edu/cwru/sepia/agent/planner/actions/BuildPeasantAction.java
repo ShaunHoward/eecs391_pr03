@@ -1,9 +1,9 @@
 package edu.cwru.sepia.agent.planner.actions;
 
+import edu.cwru.sepia.agent.planner.GameState;
 import edu.cwru.sepia.agent.planner.PlanPeasant;
-import edu.cwru.sepia.agent.planner.PlanState;
 
-public class BuildPeasantAction implements PlanAction {
+public class BuildPeasantAction implements StripsAction {
 
     /**
     Build peasant
@@ -13,13 +13,13 @@ public class BuildPeasantAction implements PlanAction {
     **/
 
     @Override
-    public boolean preconditionsMet(PlanState s, PlanState goal) {
+    public boolean preconditionsMet(GameState s, GameState goal) {
         return s.gold >= 400 && s.peasants.size() < 3;
     }
 
     @Override
-    public PlanState apply(PlanState s) {
-        PlanState newState = new PlanState(s);
+    public GameState apply(GameState s) {
+    	GameState newState = new GameState(s);
         newState.peasants.add(new PlanPeasant());
         newState.gold -= 400;
         newState.parentAction = this;

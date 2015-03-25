@@ -1,12 +1,10 @@
 package edu.cwru.sepia.agent.planner.actions;
+import edu.cwru.sepia.agent.planner.GameState;
 import edu.cwru.sepia.agent.planner.PlanPeasant;
 import edu.cwru.sepia.agent.planner.PlanResource;
-import edu.cwru.sepia.agent.planner.PlanState;
 import edu.cwru.sepia.environment.model.state.ResourceNode;
 
-import org.omg.DynamicAny._DynSequenceStub;
-
-public class MoveAction implements PlanAction {
+public class MoveAction implements StripsAction {
 
     /**
     Move to town hall
@@ -26,7 +24,7 @@ public class MoveAction implements PlanAction {
     private int makeSpan;       // cost of executing the action
     public boolean toTownhall;
 
-    public MoveAction(int k, PlanState s, Integer originId, Integer destId, boolean toTownhall) {
+    public MoveAction(int k, GameState s, Integer originId, Integer destId, boolean toTownhall) {
         this.k = k;
         this.originId = originId;
         this.destId = destId;
@@ -35,7 +33,7 @@ public class MoveAction implements PlanAction {
     }
 
     @Override
-    public boolean preconditionsMet(PlanState s, PlanState goal) {
+    public boolean preconditionsMet(GameState s, GameState goal) {
         int i = 0;
         if(destId != null) { // do not allow move to empty resource node, and gather gold before wood
             PlanResource resource = s.getResourceWithId(destId);
@@ -51,9 +49,9 @@ public class MoveAction implements PlanAction {
     }
 
     @Override
-    public PlanState apply(PlanState s) {
+    public GameState apply(GameState s) {
         int i = 0;
-        PlanState newState = new PlanState(s);
+        GameState newState = new GameState(s);
         for(PlanPeasant peasant: newState.peasants)
             if(isValid(peasant) && i++ < k) {
                 if(destId == null) peasant.setNextTo(null);

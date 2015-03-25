@@ -43,10 +43,10 @@ public class PlannerAgent extends Agent {
 	private boolean busy; // indicates if an action is currently in progress
 	private int townHall; // town hall id
 
-	private LinkedList<PlanState> plan; // list of planned actions
+	private LinkedList<GameState> plan; // list of planned actions
 
-	private Stack<PlanAction> availableActions;
-	private static ArrayList<PlanAction> actions;
+	private Stack<StripsAction> availableActions;
+	private static ArrayList<StripsAction> actions;
 	final int scenario;
 
 	// Your PEAgent implementation. This prevents you from having to parse the
@@ -77,7 +77,7 @@ public class PlannerAgent extends Agent {
 			History.HistoryView historyView) {
 
 		// generate initial state
-		PlanState initial = new PlanState(0, 0);
+		GameState initial = new GameState(0, 0);
 
 		// identify units and create minimal data structures needed for planning
 		for (int id : stateView.getUnitIds(playernum)) {
@@ -97,7 +97,7 @@ public class PlannerAgent extends Agent {
 		}
 
 		// generate goal state
-		PlanState goal = new PlanState(requiredGold, requiredWood);
+		GameState goal = new GameState(requiredGold, requiredWood);
 		// add optimal number of peasants to the goal state
 		for (int i = 0; i < getMaxPeasants(); i++)
 			goal.peasants.add(new PlanPeasant());
@@ -106,9 +106,8 @@ public class PlannerAgent extends Agent {
 		plan = PlannerAgent.AstarSearch(initial, goal, fileName);
 		// remove initial state since we are already here
 		plan.removeFirst();
-		peAgent = new PEAgent(playernum, plan, requiredGold, requiredWood,
-				buildPeasants);
-		// for(PlanState s: plan)
+		peAgent = new PEAgent(playernum, plan, buildPeasants);
+		// for(GameState s: plan)
 		// System.out.println(s.parentAction + " -> " + s);
 
 		return peAgent.initialStep(stateView, historyView);
@@ -126,8 +125,8 @@ public class PlannerAgent extends Agent {
 	}
 
 	// generate a plan using A* to do a forward state space search
-	public static LinkedList<PlanState> AstarSearch(PlanState initial,
-			PlanState goal, String fileName) {
+	public static LinkedList<GameState> AstarSearch(GameState initial,
+			GameState goal, String fileName) {
 		System.out.println("Planner initialized for:\n" + "\tInitial: "
 				+ initial + "\n" + "\tGoal: " + goal);
 		//Limit the depth at 15
@@ -136,16 +135,16 @@ public class PlannerAgent extends Agent {
 
 		registerActions(initial, goal.peasants.size());
 
-		ArrayList<PlanState> open = new ArrayList<PlanState>();
-		ArrayList<PlanState> closed = new ArrayList<PlanState>();
+		ArrayList<GameState> open = new ArrayList<GameState>();
+		ArrayList<GameState> closed = new ArrayList<GameState>();
 
-		HashMap<PlanState, PlanState> parents = new HashMap<PlanState, PlanState>();
-		HashMap<PlanState, Integer> gScore = new HashMap<PlanState, Integer>(); // cost
+		HashMap<GameState, GameState> parents = new HashMap<GameState, GameState>();
+		HashMap<GameState, Integer> gScore = new HashMap<GameState, Integer>(); // cost
 																				// along
 																				// best
 																				// known
 																				// path
-		HashMap<PlanState, Integer> fScore = new HashMap<PlanState, Integer>(); // total
+		HashMap<GameState, Integer> fScore = new HashMap<GameState, Integer>(); // total
 																				// estimated
 																				// cost
 
@@ -155,13 +154,13 @@ public class PlannerAgent extends Agent {
 
 		while (open.size() > 0) {
 			depth--;
-			PlanState current = getMinVal(fScore, open);
+			GameState current = getMinVal(fScore, open);
 //			current.parentAction.
 //			current.parentAction.d
 			// return the least cost path if the end has been reached
 			if (goalTest(current, goal) || depth == 0) {
 				System.out.println("Plan complete");
-				LinkedList<PlanState> result = buildPath(parents, current);
+				LinkedList<GameState> result = buildPath(parents, current);
 				fileName = "/home/shaun/workspace/eecs391_pr03/textPlan/test.txt";
 				writeFile(result, fileName);
 				return result;
@@ -172,7 +171,7 @@ public class PlannerAgent extends Agent {
 			// System.out.println("Expanding " + fScore.get(current) + ": " +
 			// current);
 			// evaluate next possible moves from current location
-			for (PlanState neighbor : getNeighbors(current, goal)) {
+			for (GameState neighbor : getNeighbors(current, goal)) {
 				// ignore locations in the closed set
 				if (closed.contains(neighbor))
 					continue;
@@ -184,6 +183,7 @@ public class PlannerAgent extends Agent {
 					// track the path
 					parents.put(neighbor, current);
 					gScore.put(neighbor, tempScore);
+				//	neighbor.setCost(cost);
 					// calculate heuristic cost
 					fScore.put(neighbor,
 							gScore.get(neighbor) + getHScore(neighbor, goal));
@@ -199,8 +199,8 @@ public class PlannerAgent extends Agent {
 		return null;
 	}
 
-	private static void registerActions(PlanState s, int maxPeasants) {
-		actions = new ArrayList<PlanAction>();
+	private static void registerActions(GameState s, int maxPeasants) {
+		actions = new ArrayList<StripsAction>();
 		// move to, gather, and return from each resource node
 		for (PlanResource resource : s.resources) {
 			int resId = resource.getId();
@@ -219,14 +219,14 @@ public class PlannerAgent extends Agent {
 			actions.add(new BuildPeasantAction());
 	}
 
-	private static boolean goalTest(PlanState s, PlanState goal) {
+	private static boolean goalTest(GameState s, GameState goal) {
 		return s.gold == goal.gold && s.wood == goal.wood;
 	}
 
 	/*
 	 * Get the heuristic cost of getting from state a to state b
 	 */
-	private static int getHScore(PlanState a, PlanState b) {
+	private static int getHScore(GameState a, GameState b) {
 		int score = 0;
 		// prioritize making peasants
 		score += (b.peasants.size() - a.peasants.size()) * 100;
@@ -241,11 +241,11 @@ public class PlannerAgent extends Agent {
 	}
 
 	// return item in list mapped to the lowest score
-	private static PlanState getMinVal(HashMap<PlanState, Integer> score,
-			List<PlanState> list) {
-		PlanState result = null;
+	private static GameState getMinVal(HashMap<GameState, Integer> score,
+			List<GameState> list) {
+		GameState result = null;
 		int minScore = Integer.MAX_VALUE;
-		for (PlanState state : list) {
+		for (GameState state : list) {
 			int stateScore = score.get(state);
 			if (stateScore < minScore) {
 				result = state;
@@ -256,9 +256,9 @@ public class PlannerAgent extends Agent {
 	}
 
 	// get valid moves from a given state
-	private static List<PlanState> getNeighbors(PlanState s, PlanState goal) {
-		ArrayList<PlanState> result = new ArrayList<PlanState>();
-		for (PlanAction a : actions)
+	private static List<GameState> getNeighbors(GameState s, GameState goal) {
+		ArrayList<GameState> result = new ArrayList<GameState>();
+		for (StripsAction a : actions)
 			if (a.preconditionsMet(s, goal))
 				result.add(a.apply(s));
 		return result;
@@ -266,21 +266,21 @@ public class PlannerAgent extends Agent {
 
 	// extract shortest path from a given point to the root node by tracing the
 	// parents
-	private static LinkedList<PlanState> buildPath(
-			HashMap<PlanState, PlanState> parents, PlanState s) {
-		LinkedList<PlanState> result = parents.containsKey(s) ? buildPath(
-				parents, parents.get(s)) : new LinkedList<PlanState>();
+	private static LinkedList<GameState> buildPath(
+			HashMap<GameState, GameState> parents, GameState s) {
+		LinkedList<GameState> result = parents.containsKey(s) ? buildPath(
+				parents, parents.get(s)) : new LinkedList<GameState>();
 		result.add(s);
 		return result;
 	}
 
 	// write plan to file
-	private static void writeFile(LinkedList<PlanState> plan, String fileName) {
+	private static void writeFile(LinkedList<GameState> plan, String fileName) {
 		System.out.println("Writing plan to " + fileName);
 		try {
 			PrintWriter out = new PrintWriter(fileName);
 			int i = 0;
-			for (PlanState s : plan)
+			for (GameState s : plan)
 				out.println(i++ + ": " + s.parentAction);
 			out.close();
 		} catch (Exception e) {
@@ -311,7 +311,7 @@ public class PlannerAgent extends Agent {
 	// public Map<Integer, Action> initialStep(State.StateView newState,
 	// History.HistoryView stateHistory) {
 	// // generate initial state
-	// PlanState initial = new PlanState(0, 0);
+	// GameState initial = new GameState(0, 0);
 	//
 	// // identify units and create minimal data structures needed for planning
 	// for(int id: newState.getUnitIds(playernum)) {
@@ -329,7 +329,7 @@ public class PlannerAgent extends Agent {
 	// }
 	//
 	// // generate goal state
-	// PlanState goal = new PlanState(targetGold, requiredGold);
+	// GameState goal = new GameState(targetGold, requiredGold);
 	// // add optimal number of peasants to the goal state
 	// for(int i = 0; i < getMaxPeasants(); i++)
 	// goal.peasants.add(new PlanPeasant());
@@ -339,7 +339,7 @@ public class PlannerAgent extends Agent {
 	// // remove initial state since we are already here
 	// plan.removeFirst();
 	// System.out.println("Executing plan");
-	// //for(PlanState s: plan)
+	// //for(GameState s: plan)
 	// // System.out.println(s.parentAction + " -> " + s);
 	// return middleStep(newState, stateHistory);
 	// }
@@ -373,7 +373,7 @@ public class PlannerAgent extends Agent {
 	// History.HistoryView stateHistory) {
 	// Map<Integer, Action> actions = new HashMap<Integer, Action>();
 	// List<Integer> peasants = new ArrayList<Integer>();
-	// PlanState nextState = plan.peek();
+	// GameState nextState = plan.peek();
 	// PlanAction pAction = nextState.parentAction;
 	//
 	// for(int id: newState.getUnitIds(playernum)) {

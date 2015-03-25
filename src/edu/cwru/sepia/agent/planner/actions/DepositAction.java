@@ -45,7 +45,7 @@ public class DepositAction implements StripsAction {
                 peasant.setCargo(null);
             }
         
-        newState.parentAction = (PlanAction) this;
+        newState.parentAction = this;
         return newState;
     }
 

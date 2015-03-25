@@ -1,6 +1,7 @@
 package edu.cwru.sepia.agent.planner;
 
 import edu.cwru.sepia.agent.planner.actions.PlanAction;
+import edu.cwru.sepia.agent.planner.actions.StripsAction;
 import edu.cwru.sepia.environment.model.state.State;
 
 import java.util.ArrayList;
@@ -32,15 +33,11 @@ public class GameState implements Comparable<GameState> {
 	public int gold, wood;
 	public List<PlanResource> resources;
 	public List<PlanPeasant> peasants;
-	public PlanAction parentAction;
+	public StripsAction parentAction;
 	public int x;
 	public int y;
 	private int depth;
-	private int weight;
-	private boolean weightSet;
-	private List<Value> valuesFromParent;
-	private List<Condition> state;
-	private GameState initialState;
+	private int cost;
 
 	/**
 	 * Construct a GameState from a stateview object. This is used to construct
@@ -65,18 +62,13 @@ public class GameState implements Comparable<GameState> {
 
 	public GameState(List<Condition> initialState) {
 		this.depth = 0;
-		this.weightSet = false;
 		this.parentAction = null;
-		this.valuesFromParent = null;
-		this.state = initialState;
 	}
 
-	public GameState(GameState parent, PlanAction action, List<Value> values,
+	public GameState(GameState parent, StripsAction action, List<Value> values,
 			List<Condition> state) {
 		this.depth = parent.depth + 1;
 		this.parentAction = action;
-		this.valuesFromParent = values;
-		this.state = state;
 	}
 
 	// public GameState(GameState orig){
@@ -124,8 +116,8 @@ public class GameState implements Comparable<GameState> {
 	 * @return true if the goal conditions are met in this instance of game
 	 *         state.
 	 */
-	public boolean isGoal(Condition goal) {
-		return state.contains(goal);
+	public boolean isGoal() {
+		return false;
 	}
 
 	/**
@@ -160,6 +152,10 @@ public class GameState implements Comparable<GameState> {
 	int getPeasantCount() {
 		return peasants.size();
 	}
+	
+	public void setCost(int cost){
+		this.cost = cost;
+	}
 
 	/**
 	 *
@@ -170,7 +166,7 @@ public class GameState implements Comparable<GameState> {
 	 * @return The current cost to reach this goal
 	 */
 	public double getCost() {
-		return depth;
+		return cost;
 	}
 
 	public PlanResource getResourceWithId(int id) {
@@ -215,25 +211,19 @@ public class GameState implements Comparable<GameState> {
 	 */
 	@Override
 	public boolean equals(Object o) {
+		
 		if (o == null || !(o instanceof State)) {
 			return false;
 		}
+		
 		GameState s = (GameState) o;
-		List<Condition> conds = new ArrayList<>(s.state);
-		for (Condition c : state) {
-			boolean isIn = false;
-			for (Condition c2 : s.state) {
-				if (c.equals(c2)) {
-					isIn = true;
-					conds.remove(c2);
-					break;
-				}
-			}
-			if (!isIn) {
-				return false;
-			}
-		}
-		return conds.isEmpty();
+	    if (s.getCost() == this.getCost() &&
+	    		s.gold == this.gold &&
+	    		s.wood == this.wood){
+	    	return true;
+	    }
+	    
+	    return false;
 	}
 
 	/**
@@ -245,15 +235,13 @@ public class GameState implements Comparable<GameState> {
 	 */
 	@Override
 	public int hashCode() {
-		int hash = (int) (31 * getCost() * state.size());
+		int hash = (int) (31 * getCost());
+		hash = hash * (31 * gold);
+		hash = hash * (53 * wood);
 		return hash;
 	}
-
-	public List<Condition> getState() {
-		return this.state;
-	}
-
-	public PlanAction getFromParent() {
+	
+	public StripsAction getFromParent() {
 		return this.parentAction;
 	}
 

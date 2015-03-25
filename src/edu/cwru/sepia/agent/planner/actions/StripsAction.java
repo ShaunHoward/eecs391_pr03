@@ -1,7 +1,6 @@
 package edu.cwru.sepia.agent.planner.actions;
 
 import edu.cwru.sepia.agent.planner.GameState;
-import edu.cwru.sepia.agent.planner.PlanState;
 
 /**
  * A useful start of an interface representing strips actions. You may add new methods to this interface if needed, but
