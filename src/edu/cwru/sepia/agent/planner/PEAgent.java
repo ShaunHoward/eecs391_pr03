@@ -30,7 +30,7 @@ import java.util.Stack;
 public class PEAgent extends Agent {
 
 	int curState = 0;
-    private LinkedList<GameState> plan; // list of planned actions
+    private Stack<GameState> plan; // list of planned actions
 	private int townhallId;
 	private int peasantTemplateId;
 	private boolean buildPeasants;
@@ -39,9 +39,9 @@ public class PEAgent extends Agent {
 	private List<UnitView> townhalls = new ArrayList<>();
 	private boolean busy;
 
-	public PEAgent(int playernum, LinkedList<GameState> plan, boolean buildPeasants) {
+	public PEAgent(int playernum, Stack<GameState> plan2, boolean buildPeasants) {
 		super(playernum);
-		this.plan = plan;
+		this.plan = plan2;
 		this.buildPeasants = buildPeasants;
 	}
 
@@ -50,7 +50,7 @@ public class PEAgent extends Agent {
 			History.HistoryView historyView) {
 			
 		// generate initial state
-        PlanState initial = new PlanState(0, 0);
+        GameState initial = new GameState(0, 0);
 
         // identify units and create minimal data structures needed for planning
         for(int id: stateView.getUnitIds(playernum)) {
@@ -195,9 +195,8 @@ public class PEAgent extends Agent {
                    ++j == i) done = true;
             }
             
-            
             if(done) {
-                plan.removeFirst();
+                plan.pop();
                 busy = false;
             } else if(!busy) {
                 busy = true;
@@ -236,7 +235,7 @@ public class PEAgent extends Agent {
             }
             
             if(done) {
-                plan.removeFirst();
+                plan.pop();
                 busy = false;
             } else if(!busy) {
                 busy = true;
@@ -257,7 +256,7 @@ public class PEAgent extends Agent {
             // check if the correct amount of gold/wood has been gathered
             if(stateView.getResourceAmount(playernum, ResourceType.GOLD) == nextState.gold &&
                stateView.getResourceAmount(playernum, ResourceType.WOOD) == nextState.wood) {
-                plan.removeFirst();
+                plan.pop();
                 busy = false;
             } else if(!busy) {
                 busy = true;
@@ -276,7 +275,7 @@ public class PEAgent extends Agent {
         if(pAction instanceof BuildPeasantAction) {
             // check if the correct number of peasants are present
             if(peasants.size() == nextState.peasants.size()) {
-                plan.removeFirst();
+                plan.pop();
                 busy = false;
             } else if(!busy) {
                 busy = true;
@@ -364,7 +363,7 @@ public class PEAgent extends Agent {
             }
             
             if(done) {
-                plan.removeFirst();
+                plan.pop();
                 busy = false;
             } else if(!busy) {
                 busy = true;
@@ -385,7 +384,7 @@ public class PEAgent extends Agent {
             // check if the correct amount of gold/wood has been gathered
             if(stateView.getResourceAmount(playernum, ResourceType.GOLD) == nextState.gold &&
                stateView.getResourceAmount(playernum, ResourceType.WOOD) == nextState.wood) {
-                plan.removeFirst();
+                plan.pop();
                 busy = false;
             } else if(!busy) {
                 busy = true;
@@ -404,7 +403,7 @@ public class PEAgent extends Agent {
         if(action instanceof BuildPeasantAction) {
             // check if the correct number of peasants are present
             if(peasants.size() == nextState.peasants.size()) {
-                plan.removeFirst();
+                plan.pop();
                 busy = false;
             } else if(!busy) {
                 busy = true;

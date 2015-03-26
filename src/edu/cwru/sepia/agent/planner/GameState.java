@@ -1,6 +1,5 @@
 package edu.cwru.sepia.agent.planner;
 
-import edu.cwru.sepia.agent.planner.actions.PlanAction;
 import edu.cwru.sepia.agent.planner.actions.StripsAction;
 import edu.cwru.sepia.environment.model.state.State;
 
@@ -37,7 +36,9 @@ public class GameState implements Comparable<GameState> {
 	public int x;
 	public int y;
 	private int depth;
-	private int cost;
+	private int cost = 0;
+	private int totalCost = 0;
+	private GameState parent = null;
 
 	/**
 	 * Construct a GameState from a stateview object. This is used to construct
@@ -65,8 +66,7 @@ public class GameState implements Comparable<GameState> {
 		this.parentAction = null;
 	}
 
-	public GameState(GameState parent, StripsAction action, List<Value> values,
-			List<Condition> state) {
+	public GameState(GameState parent, StripsAction action) {
 		this.depth = parent.depth + 1;
 		this.parentAction = action;
 	}
@@ -105,6 +105,14 @@ public class GameState implements Comparable<GameState> {
 			peasants.add(newPeasant);
 		}
 	}
+	
+	public void setParent(GameState parent){
+		this.parent = parent;
+	}
+	
+	public GameState getParent(){
+		return this.parent;
+	}
 
 	/**
 	 * Unlike in the first A* assignment there are many possible goal states. As
@@ -116,8 +124,8 @@ public class GameState implements Comparable<GameState> {
 	 * @return true if the goal conditions are met in this instance of game
 	 *         state.
 	 */
-	public boolean isGoal() {
-		return false;
+	public boolean isGoal(GameState goal) {
+		return gold == goal.gold && wood == goal.wood;
 	}
 
 	/**
@@ -144,9 +152,22 @@ public class GameState implements Comparable<GameState> {
 	 * @return The value estimated remaining cost to reach a goal state from
 	 *         this state.
 	 */
-	public double heuristic() {
-		return depth;
-
+	public int heuristic(GameState destination) {
+		int score = 0;
+		
+		// prioritize making peasants
+		score += (destination.peasants.size() - peasants.size()) * 100;
+		
+		// estimate cycles needed to gather resources
+		int cyclesForGold = Math.max(destination.gold - gold, 0)
+				/ (peasants.size() * 100);
+		int cyclesForWood = Math.max(destination.wood - wood, 0)
+				/ (peasants.size() * 100);
+		
+		// assume every resource is 30 steps away
+		score += (cyclesForGold + cyclesForWood) * 60;
+		
+		return score;
 	}
 
 	int getPeasantCount() {
@@ -155,6 +176,14 @@ public class GameState implements Comparable<GameState> {
 	
 	public void setCost(int cost){
 		this.cost = cost;
+	}
+	
+	public void setTotalCost(int totalCost){
+		this.totalCost = totalCost;
+	}
+	
+	public int getTotalCost(){
+		return this.totalCost;
 	}
 
 	/**
@@ -165,7 +194,7 @@ public class GameState implements Comparable<GameState> {
 	 *
 	 * @return The current cost to reach this goal
 	 */
-	public double getCost() {
+	public int getCost() {
 		return cost;
 	}
 
@@ -199,7 +228,7 @@ public class GameState implements Comparable<GameState> {
 	 */
 	@Override
 	public int compareTo(GameState o) {
-		return (int) (this.getCost() - o.getCost());
+		return (int) (this.getTotalCost() - o.getTotalCost());
 	}
 
 	/**
@@ -217,8 +246,9 @@ public class GameState implements Comparable<GameState> {
 		}
 		
 		GameState s = (GameState) o;
-	    if (s.getCost() == this.getCost() &&
-	    		s.gold == this.gold &&
+	    //if (s.getCost() == this.getCost() &&
+	    
+		if(s.gold == this.gold &&
 	    		s.wood == this.wood){
 	    	return true;
 	    }
@@ -235,8 +265,8 @@ public class GameState implements Comparable<GameState> {
 	 */
 	@Override
 	public int hashCode() {
-		int hash = (int) (31 * getCost());
-		hash = hash * (31 * gold);
+		//int hash = (int) (31 * getCost());
+		int hash = 31 * gold;
 		hash = hash * (53 * wood);
 		return hash;
 	}

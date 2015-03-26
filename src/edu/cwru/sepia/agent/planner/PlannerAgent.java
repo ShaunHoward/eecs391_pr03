@@ -6,7 +6,6 @@ import edu.cwru.sepia.agent.planner.actions.BuildPeasantAction;
 import edu.cwru.sepia.agent.planner.actions.DepositAction;
 import edu.cwru.sepia.agent.planner.actions.GatherAction;
 import edu.cwru.sepia.agent.planner.actions.MoveAction;
-import edu.cwru.sepia.agent.planner.actions.PlanAction;
 import edu.cwru.sepia.agent.planner.actions.StripsAction;
 import edu.cwru.sepia.environment.model.history.History;
 import edu.cwru.sepia.environment.model.state.ResourceType;
@@ -22,6 +21,8 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.PriorityQueue;
+import java.util.Stack;
 import java.io.*;
 import java.util.*;
 
@@ -43,7 +44,7 @@ public class PlannerAgent extends Agent {
 	private boolean busy; // indicates if an action is currently in progress
 	private int townHall; // town hall id
 
-	private LinkedList<GameState> plan; // list of planned actions
+	private Stack<GameState> plan; // list of planned actions
 
 	private Stack<StripsAction> availableActions;
 	private static ArrayList<StripsAction> actions;
@@ -104,8 +105,9 @@ public class PlannerAgent extends Agent {
 
 		// pass initial and goal states to planner and get a plan
 		plan = PlannerAgent.AstarSearch(initial, goal, fileName);
-		// remove initial state since we are already here
-		plan.removeFirst();
+		
+		savePlan(getActionPlan(plan));
+		
 		peAgent = new PEAgent(playernum, plan, buildPeasants);
 		// for(GameState s: plan)
 		// System.out.println(s.parentAction + " -> " + s);
@@ -125,73 +127,77 @@ public class PlannerAgent extends Agent {
 	}
 
 	// generate a plan using A* to do a forward state space search
-	public static LinkedList<GameState> AstarSearch(GameState initial,
+	public static Stack<GameState> AstarSearch(GameState initial,
 			GameState goal, String fileName) {
+		
 		System.out.println("Planner initialized for:\n" + "\tInitial: "
 				+ initial + "\n" + "\tGoal: " + goal);
+		
 		//Limit the depth at 15
 		int depth = 400;
 		System.out.println("Search depth will be limited to: " + depth);
 
 		registerActions(initial, goal.peasants.size());
 
-		ArrayList<GameState> open = new ArrayList<GameState>();
+		PriorityQueue<GameState> open = new PriorityQueue<GameState>();
 		ArrayList<GameState> closed = new ArrayList<GameState>();
-
-		HashMap<GameState, GameState> parents = new HashMap<GameState, GameState>();
-		HashMap<GameState, Integer> gScore = new HashMap<GameState, Integer>(); // cost
-																				// along
-																				// best
-																				// known
-																				// path
-		HashMap<GameState, Integer> fScore = new HashMap<GameState, Integer>(); // total
-																				// estimated
-																				// cost
-
+		
+		initial.setCost(0);
+		initial.setTotalCost(initial.heuristic(goal));
 		open.add(initial);
-		gScore.put(initial, 0);
-		fScore.put(initial, getHScore(initial, goal));
 
 		while (open.size() > 0) {
 			depth--;
-			GameState current = getMinVal(fScore, open);
-//			current.parentAction.
-//			current.parentAction.d
+			GameState current = open.poll();
+			
 			// return the least cost path if the end has been reached
-			if (goalTest(current, goal) || depth == 0) {
+			if (current.isGoal(goal) || depth == 0) {
 				System.out.println("Plan complete");
-				LinkedList<GameState> result = buildPath(parents, current);
-				fileName = "/home/shaun/workspace/eecs391_pr03/textPlan/test.txt";
-				writeFile(result, fileName);
-				return result;
+				Stack<GameState> aStarPath = buildPath(current);
+			//	fileName = "/home/shaun/workspace/eecs391_pr03/textPlan/test.txt";
+			//	writeFile(aStarPath, fileName);
+				return aStarPath;
 			}
+			
 			// move expanded position to the closed list
-			open.remove(current);
 			closed.add(current);
-			// System.out.println("Expanding " + fScore.get(current) + ": " +
-			// current);
+			
+			 System.out.println("Expanding " + current.getCost() + ": " +
+			 current);
+			 
 			// evaluate next possible moves from current location
 			for (GameState neighbor : getNeighbors(current, goal)) {
+				
+				neighbor.setParent(current);
+				
 				// ignore locations in the closed set
-				if (closed.contains(neighbor))
-					continue;
-				int tempScore = gScore.get(current)
+				if (!closed.contains(neighbor)){
+								
+					int tempScore = current.getCost()
 						+ neighbor.parentAction.getMakeSpan();
-				// explore low cost paths
-				if (!open.contains(neighbor)
-						|| tempScore <= gScore.get(neighbor)) {
-					// track the path
-					parents.put(neighbor, current);
-					gScore.put(neighbor, tempScore);
-				//	neighbor.setCost(cost);
-					// calculate heuristic cost
-					fScore.put(neighbor,
-							gScore.get(neighbor) + getHScore(neighbor, goal));
-					// System.out.println("\t" + neighbor.parentAction + ": " +
-					// gScore.get(neighbor) + " + " + getHScore(neighbor, goal)
-					// + " = " + fScore.get(neighbor));
-					if (!open.contains(neighbor))
-						open.add(neighbor);
+				
+					// explore low cost paths
+					if (!open.contains(neighbor)
+							|| tempScore <= neighbor.getCost()) {
+						// track the path
+						neighbor.setParent(current);
+						
+						// calculate cost from parent
+						neighbor.setCost(tempScore);
+						
+						// calculate heuristic cost
+						neighbor.setTotalCost(tempScore + neighbor.heuristic(goal));
+						
+						//fScore.put(neighbor,
+					//			gScore.get(neighbor) + getHScore(neighbor, goal));
+						// System.out.println("\t" + neighbor.parentAction + ": " +
+						// gScore.get(neighbor) + " + " + getHScore(neighbor, goal)
+						// + " = " + fScore.get(neighbor));
+					//	neighbor.setCost(current.getCost() + 1);
+						if (!open.contains(neighbor)){
+							open.add(neighbor);
+						}
+					}
 				}
 			}
 		}
@@ -219,72 +225,98 @@ public class PlannerAgent extends Agent {
 			actions.add(new BuildPeasantAction());
 	}
 
-	private static boolean goalTest(GameState s, GameState goal) {
-		return s.gold == goal.gold && s.wood == goal.wood;
-	}
-
-	/*
-	 * Get the heuristic cost of getting from state a to state b
-	 */
-	private static int getHScore(GameState a, GameState b) {
-		int score = 0;
-		// prioritize making peasants
-		score += (b.peasants.size() - a.peasants.size()) * 100;
-		// estimate cycles needed to gather resources
-		int cyclesForGold = Math.max(b.gold - a.gold, 0)
-				/ (a.peasants.size() * 100);
-		int cyclesForWood = Math.max(b.wood - a.wood, 0)
-				/ (a.peasants.size() * 100);
-		// assume every resource is 30 steps away
-		score += (cyclesForGold + cyclesForWood) * 60;
-		return score;
-	}
-
-	// return item in list mapped to the lowest score
-	private static GameState getMinVal(HashMap<GameState, Integer> score,
-			List<GameState> list) {
-		GameState result = null;
-		int minScore = Integer.MAX_VALUE;
-		for (GameState state : list) {
-			int stateScore = score.get(state);
-			if (stateScore < minScore) {
-				result = state;
-				minScore = stateScore;
-			}
-		}
-		return result;
-	}
-
 	// get valid moves from a given state
 	private static List<GameState> getNeighbors(GameState s, GameState goal) {
 		ArrayList<GameState> result = new ArrayList<GameState>();
 		for (StripsAction a : actions)
-			if (a.preconditionsMet(s, goal))
+			if (a.preconditionsMet(s, goal)){
 				result.add(a.apply(s));
+			}
 		return result;
 	}
 
 	// extract shortest path from a given point to the root node by tracing the
 	// parents
-	private static LinkedList<GameState> buildPath(
-			HashMap<GameState, GameState> parents, GameState s) {
-		LinkedList<GameState> result = parents.containsKey(s) ? buildPath(
-				parents, parents.get(s)) : new LinkedList<GameState>();
-		result.add(s);
-		return result;
+	private static Stack<GameState> buildPath(GameState state) {
+		Stack<GameState> path = new Stack<>();
+		GameState curr = state;
+		while (curr.getParent() != null){
+			path.push(curr);
+			curr = curr.getParent();
+		}
+		return path;
+	}
+	
+	private Stack<StripsAction> getActionPlan(Stack<GameState> plan){
+		Stack<StripsAction> actionPlan = new Stack<>();
+		List<StripsAction> actionList = new ArrayList<>();
+		Stack<GameState> planCopy = (Stack<GameState>) plan.clone();
+		while (!planCopy.isEmpty()) {
+			actionList.add(planCopy.pop().parentAction);
+		}
+		for (StripsAction action : actionList) {
+			actionPlan.push(action);
+		}
+		return actionPlan;
 	}
 
 	// write plan to file
-	private static void writeFile(LinkedList<GameState> plan, String fileName) {
+	private static void writeFile(Stack<GameState> plan, String fileName) {
 		System.out.println("Writing plan to " + fileName);
 		try {
 			PrintWriter out = new PrintWriter(fileName);
 			int i = 0;
-			for (GameState s : plan)
+			for (GameState s : plan) {
 				out.println(i++ + ": " + s.parentAction);
+			}
 			out.close();
 		} catch (Exception e) {
 			e.printStackTrace();
+		}
+	}
+	
+	/**
+	 * This has been provided for you. Each strips action is converted to a
+	 * string with the toString method. This means each class implementing the
+	 * StripsAction interface should override toString. Your strips actions
+	 * should have a form matching your included Strips definition writeup. That
+	 * is <action name>(<param1>, ...). So for instance the move action might
+	 * have the form of Move(peasantID, X, Y) and when grounded and written to
+	 * the file Move(1, 10, 15).
+	 *
+	 * @param stripsPlan
+	 *            Stack of Strips Actions that are written to the text file.
+	 */
+	private void savePlan(Stack<StripsAction> stripsPlan) {
+		if (stripsPlan == null) {
+			System.err.println("Cannot save null plan");
+			return;
+		}
+
+		File outputDir = new File("saves");
+		outputDir.mkdirs();
+
+		File outputFile = new File(outputDir, "plan.txt");
+
+		PrintWriter outputWriter = null;
+		try {
+			outputFile.createNewFile();
+
+			outputWriter = new PrintWriter(outputFile.getAbsolutePath());
+
+			Stack<StripsAction> tempPlan = (Stack<StripsAction>) stripsPlan.clone();
+			int actionNumber = 1;
+			while (!tempPlan.isEmpty()) {
+				outputWriter.println(actionNumber + ": " + tempPlan.pop().toString());
+				actionNumber++;
+			}
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} finally {
+			if (outputWriter != null)
+				outputWriter.close();
 		}
 	}
 
@@ -679,46 +711,5 @@ public class PlannerAgent extends Agent {
 	// }
 	// }
 
-	/**
-	 * This has been provided for you. Each strips action is converted to a
-	 * string with the toString method. This means each class implementing the
-	 * StripsAction interface should override toString. Your strips actions
-	 * should have a form matching your included Strips definition writeup. That
-	 * is <action name>(<param1>, ...). So for instance the move action might
-	 * have the form of Move(peasantID, X, Y) and when grounded and written to
-	 * the file Move(1, 10, 15).
-	 *
-	 * @param stripsPlan
-	 *            Stack of Strips Actions that are written to the text file.
-	 */
-	private void savePlan(Stack<PlanAction> stripsPlan) {
-		if (stripsPlan == null) {
-			System.err.println("Cannot save null plan");
-			return;
-		}
 
-		File outputDir = new File("saves");
-		outputDir.mkdirs();
-
-		File outputFile = new File(outputDir, "plan.txt");
-
-		PrintWriter outputWriter = null;
-		try {
-			outputFile.createNewFile();
-
-			outputWriter = new PrintWriter(outputFile.getAbsolutePath());
-
-			Stack<PlanAction> tempPlan = (Stack<PlanAction>) stripsPlan.clone();
-			while (!tempPlan.isEmpty()) {
-				outputWriter.println(tempPlan.pop().toString());
-			}
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		} finally {
-			if (outputWriter != null)
-				outputWriter.close();
-		}
-	}
 }
