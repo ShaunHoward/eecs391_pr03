@@ -117,7 +117,7 @@ public class PlannerAgent extends Agent {
 				+ initial + "\n" + "\tGoal: " + goal);
 
 		// Limit the depth at
-		int depth = 400;
+		int depth = 220;
 		System.out.println("Search depth will be limited to: " + depth);
 
 		addBaseActions(initial, goal.peasants.size());
@@ -147,7 +147,7 @@ public class PlannerAgent extends Agent {
 					+ current);
 
 			// evaluate next possible moves from current location
-			for (GameState neighbor : getNeighbors(current, goal)) {
+			for (GameState neighbor : current.generateChildren(goal, actions)) {
 
 				neighbor.setParent(current);
 
