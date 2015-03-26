@@ -8,47 +8,35 @@ import edu.cwru.sepia.agent.planner.actions.GatherAction;
 import edu.cwru.sepia.agent.planner.actions.MoveAction;
 import edu.cwru.sepia.agent.planner.actions.StripsAction;
 import edu.cwru.sepia.environment.model.history.History;
-import edu.cwru.sepia.environment.model.state.ResourceType;
 import edu.cwru.sepia.environment.model.state.State;
 import edu.cwru.sepia.environment.model.state.Unit;
-import edu.cwru.sepia.environment.model.state.Unit.UnitView;
 
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Stack;
 import java.io.*;
-import java.util.*;
 
 /**
- * Created by Devin on 3/15/15.
+ * @author Shaun Howard (smh150), Matt Swartwout(mws85)
  */
 public class PlannerAgent extends Agent {
 
-	private static final int WOODSMALL1 = 200, GOLDSMALL1 = 200,
-			WOODSMALL2 = 1000, GOLDSMALL2 = 1000, WOODLARGE1 = 1000,
-			GOLDLARGE1 = 1000, WOODLARGE2 = 2000, GOLDLARGE2 = 3000;
+	private static final long serialVersionUID = 1L;
 
 	final int requiredWood;
 	final int requiredGold;
 	final boolean buildPeasants;
 
-	private String fileName; // name of plan output file
-
-	private boolean busy; // indicates if an action is currently in progress
 	private int townHall; // town hall id
 
 	private Stack<GameState> plan; // list of planned actions
 
-	private Stack<StripsAction> availableActions;
 	private static ArrayList<StripsAction> actions;
-	final int scenario;
 
 	// Your PEAgent implementation. This prevents you from having to parse the
 	// text file representation of your plan.
@@ -58,15 +46,13 @@ public class PlannerAgent extends Agent {
 		super(playernum);
 
 		if (params.length < 3) {
-			System.err
-					.println("You must specify the required wood and gold amounts and whether peasants should be built");
+			System.err.println("You must specify the required wood and"
+					+ " gold amounts and whether peasants should be built");
 		}
 
 		requiredWood = Integer.parseInt(params[0]);
 		requiredGold = Integer.parseInt(params[1]);
 		buildPeasants = Boolean.parseBoolean(params[2]);
-		scenario = generateScenario();
-		availableActions = new Stack<>();
 
 		System.out.println("required wood: " + requiredWood
 				+ " required gold: " + requiredGold + " build Peasants: "
@@ -104,13 +90,11 @@ public class PlannerAgent extends Agent {
 			goal.peasants.add(new PlanPeasant());
 
 		// pass initial and goal states to planner and get a plan
-		plan = PlannerAgent.AstarSearch(initial, goal, fileName);
-		
+		plan = PlannerAgent.AstarSearch(initial, goal);
+
 		savePlan(getActionPlan(plan));
-		
+
 		peAgent = new PEAgent(playernum, plan, buildPeasants);
-		// for(GameState s: plan)
-		// System.out.println(s.parentAction + " -> " + s);
 
 		return peAgent.initialStep(stateView, historyView);
 	}
@@ -127,74 +111,66 @@ public class PlannerAgent extends Agent {
 	}
 
 	// generate a plan using A* to do a forward state space search
-	public static Stack<GameState> AstarSearch(GameState initial,
-			GameState goal, String fileName) {
-		
+	public static Stack<GameState> AstarSearch(GameState initial, GameState goal) {
+
 		System.out.println("Planner initialized for:\n" + "\tInitial: "
 				+ initial + "\n" + "\tGoal: " + goal);
-		
-		//Limit the depth at 15
+
+		// Limit the depth at
 		int depth = 400;
 		System.out.println("Search depth will be limited to: " + depth);
 
-		registerActions(initial, goal.peasants.size());
+		addBaseActions(initial, goal.peasants.size());
 
 		PriorityQueue<GameState> open = new PriorityQueue<GameState>();
 		ArrayList<GameState> closed = new ArrayList<GameState>();
-		
+
 		initial.setCost(0);
 		initial.setTotalCost(initial.heuristic(goal));
 		open.add(initial);
 
 		while (open.size() > 0) {
-			depth--;
+
 			GameState current = open.poll();
-			
+
 			// return the least cost path if the end has been reached
-			if (current.isGoal(goal) || depth == 0) {
+			if (current.isGoal(goal) || current.getCost() >= depth) {
 				System.out.println("Plan complete");
 				Stack<GameState> aStarPath = buildPath(current);
-			//	fileName = "/home/shaun/workspace/eecs391_pr03/textPlan/test.txt";
-			//	writeFile(aStarPath, fileName);
 				return aStarPath;
 			}
-			
+
 			// move expanded position to the closed list
 			closed.add(current);
-			
-			 System.out.println("Expanding " + current.getCost() + ": " +
-			 current);
-			 
+
+			System.out.println("Expanding " + current.getCost() + ": "
+					+ current);
+
 			// evaluate next possible moves from current location
 			for (GameState neighbor : getNeighbors(current, goal)) {
-				
+
 				neighbor.setParent(current);
-				
+
 				// ignore locations in the closed set
-				if (!closed.contains(neighbor)){
-								
+				if (!closed.contains(neighbor)) {
+
 					int tempScore = current.getCost()
-						+ neighbor.parentAction.getMakeSpan();
-				
+							+ neighbor.parentAction.getMakeSpan();
+
 					// explore low cost paths
 					if (!open.contains(neighbor)
 							|| tempScore <= neighbor.getCost()) {
 						// track the path
 						neighbor.setParent(current);
-						
+
 						// calculate cost from parent
 						neighbor.setCost(tempScore);
-						
+
 						// calculate heuristic cost
-						neighbor.setTotalCost(tempScore + neighbor.heuristic(goal));
-						
-						//fScore.put(neighbor,
-					//			gScore.get(neighbor) + getHScore(neighbor, goal));
-						// System.out.println("\t" + neighbor.parentAction + ": " +
-						// gScore.get(neighbor) + " + " + getHScore(neighbor, goal)
-						// + " = " + fScore.get(neighbor));
-					//	neighbor.setCost(current.getCost() + 1);
-						if (!open.contains(neighbor)){
+						neighbor.setTotalCost(tempScore
+								+ neighbor.heuristic(goal));
+
+						if (!open.contains(neighbor)) {
 							open.add(neighbor);
 						}
 					}
@@ -205,7 +181,7 @@ public class PlannerAgent extends Agent {
 		return null;
 	}
 
-	private static void registerActions(GameState s, int maxPeasants) {
+	private static void addBaseActions(GameState s, int maxPeasants) {
 		actions = new ArrayList<StripsAction>();
 		// move to, gather, and return from each resource node
 		for (PlanResource resource : s.resources) {
@@ -229,7 +205,7 @@ public class PlannerAgent extends Agent {
 	private static List<GameState> getNeighbors(GameState s, GameState goal) {
 		ArrayList<GameState> result = new ArrayList<GameState>();
 		for (StripsAction a : actions)
-			if (a.preconditionsMet(s, goal)){
+			if (a.preconditionsMet(s, goal)) {
 				result.add(a.apply(s));
 			}
 		return result;
@@ -240,14 +216,14 @@ public class PlannerAgent extends Agent {
 	private static Stack<GameState> buildPath(GameState state) {
 		Stack<GameState> path = new Stack<>();
 		GameState curr = state;
-		while (curr.getParent() != null){
+		while (curr.getParent() != null) {
 			path.push(curr);
 			curr = curr.getParent();
 		}
 		return path;
 	}
-	
-	private Stack<StripsAction> getActionPlan(Stack<GameState> plan){
+
+	private Stack<StripsAction> getActionPlan(Stack<GameState> plan) {
 		Stack<StripsAction> actionPlan = new Stack<>();
 		List<StripsAction> actionList = new ArrayList<>();
 		Stack<GameState> planCopy = (Stack<GameState>) plan.clone();
@@ -260,21 +236,6 @@ public class PlannerAgent extends Agent {
 		return actionPlan;
 	}
 
-	// write plan to file
-	private static void writeFile(Stack<GameState> plan, String fileName) {
-		System.out.println("Writing plan to " + fileName);
-		try {
-			PrintWriter out = new PrintWriter(fileName);
-			int i = 0;
-			for (GameState s : plan) {
-				out.println(i++ + ": " + s.parentAction);
-			}
-			out.close();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-	
 	/**
 	 * This has been provided for you. Each strips action is converted to a
 	 * string with the toString method. This means each class implementing the
@@ -304,10 +265,12 @@ public class PlannerAgent extends Agent {
 
 			outputWriter = new PrintWriter(outputFile.getAbsolutePath());
 
-			Stack<StripsAction> tempPlan = (Stack<StripsAction>) stripsPlan.clone();
+			Stack<StripsAction> tempPlan = (Stack<StripsAction>) stripsPlan
+					.clone();
 			int actionNumber = 1;
 			while (!tempPlan.isEmpty()) {
-				outputWriter.println(actionNumber + ": " + tempPlan.pop().toString());
+				outputWriter.println(actionNumber + ": "
+						+ tempPlan.pop().toString());
 				actionNumber++;
 			}
 		} catch (FileNotFoundException e) {
@@ -319,62 +282,6 @@ public class PlannerAgent extends Agent {
 				outputWriter.close();
 		}
 	}
-
-	public int generateScenario() {
-
-		if (requiredWood == WOODSMALL1 && requiredGold == GOLDSMALL1) {
-			return 1;
-		} else if (requiredWood <= WOODSMALL2 && requiredGold <= GOLDSMALL2) {
-			return 2;
-		} else if (requiredWood <= WOODLARGE1 && requiredGold <= GOLDLARGE1) {
-			return 3;
-		} else if (requiredWood <= WOODLARGE2 && requiredGold <= GOLDLARGE2) {
-			return 4;
-		} else {
-			System.err
-					.println("A scenario this large is not fully supported in this implementation.");
-			System.err.println("The program may not function correctly.");
-			return 4;
-		}
-	}
-
-	//
-	// @Override
-	// public Map<Integer, Action> initialStep(State.StateView newState,
-	// History.HistoryView stateHistory) {
-	// // generate initial state
-	// GameState initial = new GameState(0, 0);
-	//
-	// // identify units and create minimal data structures needed for planning
-	// for(int id: newState.getUnitIds(playernum)) {
-	// Unit.UnitView unit = newState.getUnit(id);
-	// String typeName = unit.getTemplateView().getName();
-	// if(typeName.equals("TownHall")) townHall = id;
-	// if(typeName.equals("Peasant")) initial.peasants.add(new PlanPeasant());
-	// }
-	//
-	// // identify resources and create minimal data structures needed for
-	// planning
-	// for(int id: newState.getAllResourceIds()) {
-	// initial.resources.add(new PlanResource(newState.getResourceNode(id),
-	// newState.getUnit(townHall)));
-	// }
-	//
-	// // generate goal state
-	// GameState goal = new GameState(targetGold, requiredGold);
-	// // add optimal number of peasants to the goal state
-	// for(int i = 0; i < getMaxPeasants(); i++)
-	// goal.peasants.add(new PlanPeasant());
-	//
-	// // pass initial and goal states to planner and get a plan
-	// plan = PlannerAgent.AstarSearch(initial, goal, fileName);
-	// // remove initial state since we are already here
-	// plan.removeFirst();
-	// System.out.println("Executing plan");
-	// //for(GameState s: plan)
-	// // System.out.println(s.parentAction + " -> " + s);
-	// return middleStep(newState, stateHistory);
-	// }
 
 	/*
 	 * Assuming each peasant takes one cycle of 4 actions
@@ -396,320 +303,13 @@ public class PlannerAgent extends Agent {
 		return 3;
 	}
 
-	// /*
-	// @TODO: Fix translation between plan steps and game state actions
-	// Pretty close but not working fully
-	// */
-	// @Override
-	// public Map<Integer, Action> middleStep(State.StateView newState,
-	// History.HistoryView stateHistory) {
-	// Map<Integer, Action> actions = new HashMap<Integer, Action>();
-	// List<Integer> peasants = new ArrayList<Integer>();
-	// GameState nextState = plan.peek();
-	// PlanAction pAction = nextState.parentAction;
-	//
-	// for(int id: newState.getUnitIds(playernum)) {
-	// Unit.UnitView unit = newState.getUnit(id);
-	// String typeName = unit.getTemplateView().getName();
-	// if(typeName.equals("Peasant")) peasants.add(id);
-	// }
-	//
-	// if(pAction instanceof MoveAction) {
-	// MoveAction mAction = (MoveAction) pAction;
-	// Unit.UnitView townHallUnit = newState.getUnit(townHall);
-	// PlanResource resource = nextState.getResourceWithId(mAction.getOriginId()
-	// == null ?
-	// mAction.getDestId() :
-	// mAction.getOriginId());
-	// boolean done = false;
-	// boolean toTownHall = mAction.getDestId() == null;
-	// int i = 0, j = 0;
-	// int originX, originY, destX, destY;
-	// if(toTownHall) {
-	// originX = resource.getX();
-	// originY = resource.getY();
-	// destX = townHallUnit.getXPosition();
-	// destY = townHallUnit.getYPosition();
-	// } else {
-	// originX = townHallUnit.getXPosition();
-	// originY = townHallUnit.getYPosition();
-	// destX = resource.getX();
-	// destY = resource.getY();
-	// }
-	// // get the number of peasants that should be at the destination
-	// for(PlanPeasant peasant: nextState.peasants) {
-	// if(toTownHall && peasant.getNextTo() == null) i++;
-	// if(!toTownHall && peasant.getNextTo() != null) i++;
-	// }
-	// // check to see if the right number of peasants are there
-	// for(int id: peasants) {
-	// Unit.UnitView peasant = newState.getUnit(id);
-	// if(isAdjacent(peasant.getXPosition(), peasant.getYPosition(), destX,
-	// destY) &&
-	// ++j == i) done = true;
-	// }
-	// if(done) {
-	// plan.removeFirst();
-	// busy = false;
-	// } else if(!busy) {
-	// busy = true;
-	// int k = 0;
-	// // order each peasant to move to the destination
-	// for(int id: peasants) {
-	// Unit.UnitView peasant = newState.getUnit(id);
-	// if(isAdjacent(peasant.getXPosition(), peasant.getYPosition(),
-	// originX, originY) && k++ < mAction.getK())
-	// actions.put(id, Action.createCompoundMove(id, destX, destY));
-	// }
-	// }
-	// }
-	//
-	// if(pAction instanceof GatherAction) {
-	// GatherAction gAction = (GatherAction) pAction;
-	// boolean done = false;
-	// int i = 0;
-	// // check if each peasant at the target is carrying cargo
-	// for(int id: peasants) {
-	// Unit.UnitView peasant = newState.getUnit(id);
-	// if(isAdjacent(peasant.getXPosition(), peasant.getYPosition(),
-	// gAction.getX(), gAction.getY()) &&
-	// peasant.getCargoAmount() > 0 && ++i == gAction.getK()) done = true;
-	// }
-	// if(done) {
-	// plan.removeFirst();
-	// busy = false;
-	// } else if(!busy){
-	// busy = true;
-	// int j = 0;
-	// // order peasants to gather the target resource
-	// for(int id: peasants) {
-	// Unit.UnitView peasant = newState.getUnit(id);
-	// if(isAdjacent(peasant.getXPosition(), peasant.getYPosition(),
-	// gAction.getX(), gAction.getY()) &&
-	// j++ < gAction.getK())
-	// actions.put(id, Action.createCompoundGather(id,
-	// newState.resourceAt(gAction.getX(), gAction.getY())));
-	// }
-	// }
-	// }
-	//
-	// if(pAction instanceof DepositAction) {
-	// Unit.UnitView townHallUnit = newState.getUnit(townHall);
-	// // check if the correct amount of gold/wood has been gathered
-	// if(newState.getResourceAmount(playernum, ResourceType.GOLD) ==
-	// nextState.gold &&
-	// newState.getResourceAmount(playernum, ResourceType.WOOD) ==
-	// nextState.wood) {
-	// plan.removeFirst();
-	// busy = false;
-	// } else if(!busy) {
-	// busy = true;
-	// int i = 0;
-	// // order peasants at the town hall to deposit resources
-	// for(int id: peasants) {
-	// Unit.UnitView peasant = newState.getUnit(id);
-	// if(isAdjacent(peasant.getXPosition(), peasant.getYPosition(),
-	// townHallUnit.getXPosition(), townHallUnit.getYPosition()) &&
-	// peasant.getCargoAmount() > 0 && i++ < ((DepositAction) pAction).getK())
-	// actions.put(id, Action.createCompoundDeposit(id, townHall));
-	// }
-	// }
-	// }
-	//
-	// if(pAction instanceof BuildPeasantAction) {
-	// // check if the correct number of peasants are present
-	// if(peasants.size() == nextState.peasants.size()) {
-	// plan.removeFirst();
-	// busy = false;
-	// } else if(!busy) {
-	// busy = true;
-	// // build a peasant
-	// actions.put(townHall, Action.createCompoundProduction(townHall,
-	// newState.getTemplate(playernum, "Peasant").getID()));
-	// }
-	// }
-	// return actions;
-	// }
-
 	@Override
 	public void terminalStep(State.StateView stateView,
-			History.HistoryView historyView) {
-
-	}
+			History.HistoryView historyView) {}
 
 	@Override
-	public void savePlayerData(OutputStream outputStream) {
-
-	}
+	public void savePlayerData(OutputStream outputStream) {}
 
 	@Override
-	public void loadPlayerData(InputStream inputStream) {
-
-	}
-
-	// /**
-	// * Perform an A* search of the game graph. This should return your plan as
-	// a
-	// * stack of actions. This is essentially the same as your first
-	// assignment.
-	// * The implementations should be very similar. The difference being that
-	// * your nodes are now GameState objects not MapLocation objects.
-	// *
-	// * @param startState
-	// * The state which is being planned from
-	// * @return The plan or null if no plan is found.
-	// */
-	// private Stack<GameState> AstarSearch(GameState startState) {
-	// Stack<PlanAction> possibleActions = new Stack<>();
-	// possibleActions.addAll(PlanAction.getActions(scenario));
-	// availableActions = possibleActions;
-	// GameState goalState = GameState.getGoalState(requiredGold, requiredWood);
-	// List<GameState> plan = new Stack<>();
-	// plan.add(startState);
-	//
-	// //fulfill all goals
-	// for (Condition goalCondition : goalState.getState()) {
-	// //determine if the current goal is to harvest gold
-	// GameState.isGold = goalCondition.getValue("type").getValue() ==
-	// Condition.GOLD
-	// .getValue();
-	//
-	// //use A* to find the path to fulfill this goal condition
-	// List<GameState> goalPath = getPathToGoal(goalCondition,
-	// plan.get(plan.size() - 1));
-	//
-	// System.out.println(goalPath.toString());
-	//
-	// plan = new ArrayList<>(goalPath);
-	// }
-	//
-	// //convert list to stack
-	// Stack<GameState> actions = new Stack<>();
-	// actions.addAll(plan);
-	// return actions;
-	// }
-
-	// private List<GameState> getPathToGoal(Condition goalCondition,
-	// GameState currentState) {
-	// // Find a goal state.
-	// List<GameState> states = new ArrayList<>();
-	// GameState current = currentState;
-	// do {
-	// states.addAll(getNextStates(current));
-	// // A* is being performed here, since the State.compareTo() is
-	// // comparing states based on their heuristic values
-	// Collections.sort(states);
-	// current = states.get(0);
-	// states.remove(0);
-	// System.out.println("Current state is: " + current.toString());
-	// System.out.println("Still in A star loop");
-	// } while (!current.isGoal(goalCondition) && !states.isEmpty());
-	//
-	// // Make the path from beginning to end
-	// List<GameState> path = new Stack<>();
-	// while (current.getParent() != null) {
-	// path.add(0, current);
-	// current = current.getParent();
-	// }
-	// return path;
-	// }
-	//
-	// private List<GameState> getNextStates(GameState currentState) {
-	// List<PlanAction> possibleActions = generatePossibleActions(currentState);
-	// List<GameState> nextStates = new ArrayList<>();
-	// for (PlanAction action : possibleActions) {
-	// nextStates.add(action.apply(currentState));
-	// }
-	// return nextStates;
-	// }
-	//
-	// public List<PlanAction> generatePossibleActions(GameState state) {
-	// List<Value> variables = new ArrayList<>();
-	// for (Condition condition : state.getState()) {
-	// variables.addAll(condition.getVariables());
-	// }
-	// List<Value> units = new ArrayList<>();
-	// List<Value> positions = new ArrayList<>();
-	// List<Value> types = new ArrayList<>();
-	// outer: for (Value variable : variables) {
-	// if (variable == null || variable.getName().isEmpty()) {
-	// continue;
-	// }
-	// List<Value> addList = null;
-	// if (variable.getName().equalsIgnoreCase("first")
-	// || variable.getName().equalsIgnoreCase("second")
-	// || variable.getName().equalsIgnoreCase("third")) {
-	// addList = units;
-	// } else if (variable.getName().equalsIgnoreCase("pos")
-	// || variable.getName().equalsIgnoreCase("to")
-	// || variable.getName().equalsIgnoreCase("from")) {
-	// addList = positions;
-	// } else if (variable.getName().equalsIgnoreCase("type")) {
-	// addList = types;
-	// } else if (variable.getName().equalsIgnoreCase("amt")) {
-	// continue;
-	// }
-	// if (addList == null) {
-	// System.out.println("Unrecognized variable name!!! "
-	// + variable.getName());
-	// continue;
-	// }
-	// for (Value var : addList) {
-	// if (variable.getName().equals(var.getName())
-	// && variable.equals(var)) {
-	// continue outer;
-	// }
-	// }
-	// addList.add(variable);
-	// }
-	// // List<PlanAction> validActions = new ArrayList<>();
-	// // while(!stripsActions.isEmpty()) {
-	// // List<PlanAction> possibleActions =
-	// // stripsActions.pop().getPossibleActions(units, positions, types);
-	// // inner: for (PlanAction action : possibleActions) {
-	// // if (action.preconditionsMet(state)) {
-	// // for (PlanAction existingAction : validActions) {
-	// // if (existingAction.equals(action)) {
-	// // continue inner;
-	// // }
-	// // }
-	// // validActions.add(action);
-	// // }
-	// // }
-	// // }
-	// List<PlanAction> validActions = new ArrayList<>();
-	// for (PlanAction actionTemplate : availableActions) {
-	// List<PlanAction> possibleActions = actionTemplate
-	// .getPossibleActions(units, positions, types);
-	// inner: for (PlanAction action : possibleActions) {
-	// if (action.preconditionsMet(state)) {
-	// for (PlanAction existingAction : validActions) {
-	// if (existingAction.equals(action)) {
-	// continue inner;
-	// }
-	// }
-	// validActions.add(action);
-	// }
-	// }
-	// }
-	// return validActions;
-	// // }
-	//
-	// public static void printPlan(List<GameState> plan, PrintStream writer) {
-	// System.out.println("PRINTING PLAN");
-	// for (GameState state : plan) {
-	// writer.print("Step " + state.getDepth() + " - ");
-	// writer.print("Action: " + state.getFromParent().getName() + " (");
-	// for (Value val : state.getFromParent().getConstants()) {
-	// writer.print(val.getConstantAsString());
-	// if (state.getFromParent().getConstants().indexOf(val) != state
-	// .getFromParent().getConstants().size() - 1) {
-	// writer.print(", ");
-	// }
-	// }
-	// writer.println(")");
-	// }
-	// }
-
-
+	public void loadPlayerData(InputStream inputStream) {}
 }

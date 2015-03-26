@@ -75,23 +75,8 @@ public class PEAgent extends Agent {
 			}
 		}
 
-//        // generate goal state
-//        PlanState goal = new PlanState(requiredGold, requiredWood);
-//        
-//        // add optimal number of peasants to the goal state
-//        for(int i = 0; i < getMaxPeasants(); i++) {
-//            goal.peasants.add(new PlanPeasant());
-//        }
-
-        // pass initial and goal states to planner and get a plan
-   //     plan = PlannerAgent.AstarSearch(initial, goal, fileName);
-        // remove initial state since we are already here
-      //  plan.removeFirst();
-        System.out.println("Executing plan");
+        System.out.println("Executing plan:");
         
-        
-        //for(PlanState s: plan)
-        //    System.out.println(s.parentAction + " -> " + s);
         return middleStep(stateView, historyView);
 	}
 	

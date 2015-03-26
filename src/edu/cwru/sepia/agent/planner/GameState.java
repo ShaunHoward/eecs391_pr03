@@ -105,12 +105,12 @@ public class GameState implements Comparable<GameState> {
 			peasants.add(newPeasant);
 		}
 	}
-	
-	public void setParent(GameState parent){
+
+	public void setParent(GameState parent) {
 		this.parent = parent;
 	}
-	
-	public GameState getParent(){
+
+	public GameState getParent() {
 		return this.parent;
 	}
 
@@ -136,9 +136,17 @@ public class GameState implements Comparable<GameState> {
 	 * @return A list of the possible successor states and their associated
 	 *         actions
 	 */
-	public List<GameState> generateChildren() {
-		// TODO: Implement me!
-		return null;
+	public List<GameState> generateChildren(GameState goal,
+			List<StripsAction> actions) {
+		ArrayList<GameState> result = new ArrayList<GameState>();
+		
+		for (StripsAction a : actions) {
+			if (a.preconditionsMet(this, goal)) {
+				result.add(a.apply(this));
+			}
+		}
+		
+		return result;
 	}
 
 	/**
@@ -154,35 +162,35 @@ public class GameState implements Comparable<GameState> {
 	 */
 	public int heuristic(GameState destination) {
 		int score = 0;
-		
+
 		// prioritize making peasants
 		score += (destination.peasants.size() - peasants.size()) * 100;
-		
+
 		// estimate cycles needed to gather resources
 		int cyclesForGold = Math.max(destination.gold - gold, 0)
 				/ (peasants.size() * 100);
 		int cyclesForWood = Math.max(destination.wood - wood, 0)
 				/ (peasants.size() * 100);
-		
+
 		// assume every resource is 30 steps away
 		score += (cyclesForGold + cyclesForWood) * 60;
-		
+
 		return score;
 	}
 
 	int getPeasantCount() {
 		return peasants.size();
 	}
-	
-	public void setCost(int cost){
+
+	public void setCost(int cost) {
 		this.cost = cost;
 	}
-	
-	public void setTotalCost(int totalCost){
+
+	public void setTotalCost(int totalCost) {
 		this.totalCost = totalCost;
 	}
-	
-	public int getTotalCost(){
+
+	public int getTotalCost() {
 		return this.totalCost;
 	}
 
@@ -240,20 +248,19 @@ public class GameState implements Comparable<GameState> {
 	 */
 	@Override
 	public boolean equals(Object o) {
-		
+
 		if (o == null || !(o instanceof State)) {
 			return false;
 		}
-		
+
 		GameState s = (GameState) o;
-	    //if (s.getCost() == this.getCost() &&
-	    
-		if(s.gold == this.gold &&
-	    		s.wood == this.wood){
-	    	return true;
-	    }
-	    
-	    return false;
+		// if (s.getCost() == this.getCost() &&
+
+		if (s.gold == this.gold && s.wood == this.wood) {
+			return true;
+		}
+
+		return false;
 	}
 
 	/**
@@ -265,12 +272,12 @@ public class GameState implements Comparable<GameState> {
 	 */
 	@Override
 	public int hashCode() {
-		//int hash = (int) (31 * getCost());
+		// int hash = (int) (31 * getCost());
 		int hash = 31 * gold;
 		hash = hash * (53 * wood);
 		return hash;
 	}
-	
+
 	public StripsAction getFromParent() {
 		return this.parentAction;
 	}
