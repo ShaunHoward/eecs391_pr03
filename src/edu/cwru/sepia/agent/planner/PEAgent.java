@@ -158,9 +158,9 @@ public class PEAgent extends Agent {
                 originY = resource.getY();
                 destX = townHallUnit.getXPosition();
                 destY = townHallUnit.getYPosition();
-                System.out.println("The townhall rules all destinations!");
+                System.out.println("Moving to deposit at townhall");
             } else {
-            	System.out.println("townhall is not everything!");
+            	System.out.println("Moving to gather resource");
                 originX = townHallUnit.getXPosition();
                 originY = townHallUnit.getYPosition();
                 destX = resource.getX();

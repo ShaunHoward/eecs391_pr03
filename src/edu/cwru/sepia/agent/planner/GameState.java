@@ -4,7 +4,6 @@ import edu.cwru.sepia.agent.planner.actions.StripsAction;
 import edu.cwru.sepia.environment.model.state.State;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -61,11 +60,6 @@ public class GameState implements Comparable<GameState> {
 		// make new state here
 	}
 
-	public GameState(List<Condition> initialState) {
-		this.depth = 0;
-		this.parentAction = null;
-	}
-
 	public GameState(GameState parent, StripsAction action) {
 		this.depth = parent.depth + 1;
 		this.parentAction = action;
@@ -112,6 +106,18 @@ public class GameState implements Comparable<GameState> {
 
 	public GameState getParent() {
 		return this.parent;
+	}
+	
+	public void setDepth(int depth){
+		this.depth = depth;
+	}
+
+	public StripsAction getFromParent() {
+		return this.parentAction;
+	}
+
+	public int getDepth() {
+		return this.depth;
 	}
 
 	/**
@@ -278,11 +284,4 @@ public class GameState implements Comparable<GameState> {
 		return hash;
 	}
 
-	public StripsAction getFromParent() {
-		return this.parentAction;
-	}
-
-	public int getDepth() {
-		return this.depth;
-	}
 }

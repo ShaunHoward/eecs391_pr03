@@ -117,7 +117,7 @@ public class PlannerAgent extends Agent {
 				+ initial + "\n" + "\tGoal: " + goal);
 
 		// Limit the depth at
-		int depth = 220;
+		int depth = 230;
 		System.out.println("Search depth will be limited to: " + depth);
 
 		addBaseActions(initial, goal.peasants.size());
@@ -126,10 +126,11 @@ public class PlannerAgent extends Agent {
 		ArrayList<GameState> closed = new ArrayList<GameState>();
 
 		initial.setCost(0);
+		initial.setDepth(0);
 		initial.setTotalCost(initial.heuristic(goal));
 		open.add(initial);
 
-		while (open.size() > 0) {
+		while (!open.isEmpty()) {
 
 			GameState current = open.poll();
 
@@ -150,6 +151,7 @@ public class PlannerAgent extends Agent {
 			for (GameState neighbor : current.generateChildren(goal, actions)) {
 
 				neighbor.setParent(current);
+				neighbor.setDepth(current.getDepth() + 1);
 
 				// ignore locations in the closed set
 				if (!closed.contains(neighbor)) {
