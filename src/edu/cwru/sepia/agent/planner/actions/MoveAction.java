@@ -38,8 +38,10 @@ public class MoveAction implements StripsAction {
         if(destId != null) { // do not allow move to empty resource node, and gather gold before wood
             PlanResource resource = s.getResourceWithId(destId);
             if(resource.getAmount() < peasantCount * 100 ||
-               (resource.getType().equals(ResourceNode.Type.TREE) && s.gold < goal.gold) ||
-               (resource.getType().equals(ResourceNode.Type.GOLD_MINE) && s.gold > goal.gold)) return false;
+               (resource.getType().equals(ResourceNode.Type.TREE) && s.gold < goal.gold) || 
+               (resource.getType().equals(ResourceNode.Type.GOLD_MINE) && s.gold > goal.gold)) {
+            	return false;
+            }
         }
         if(s.peasants.size() >= peasantCount) {
             for(PlanPeasant peasant: s.peasants)
@@ -54,6 +56,7 @@ public class MoveAction implements StripsAction {
         GameState newState = new GameState(s);
         for(PlanPeasant peasant: newState.peasants)
             if(isValid(peasant) && i++ < peasantCount) {
+            	
                 if(destId == null) peasant.setNextTo(null);
                 else peasant.setNextTo(newState.getResourceWithId(destId));
             }
@@ -69,7 +72,7 @@ public class MoveAction implements StripsAction {
 
     private boolean isValid(PlanPeasant peasant) {
         if(destId == null)
-            return peasant.getNextTo() != null && peasant.getNextTo().getId() == originId && peasant.getCargo() != null;
+            return peasant.getNextTo() != null && peasant.getNextTo().getId() == originId && peasant.getCargo() != null && peasant.getCargoAmount() > 0;
         else
             return peasant.getNextTo() == null && peasant.getCargo() == null;
     }

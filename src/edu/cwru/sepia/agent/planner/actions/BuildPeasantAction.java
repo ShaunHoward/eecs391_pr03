@@ -2,6 +2,7 @@ package edu.cwru.sepia.agent.planner.actions;
 
 import edu.cwru.sepia.agent.planner.GameState;
 import edu.cwru.sepia.agent.planner.PlanPeasant;
+import edu.cwru.sepia.agent.planner.PlanResource;
 
 public class BuildPeasantAction implements StripsAction {
 
@@ -20,7 +21,20 @@ public class BuildPeasantAction implements StripsAction {
     @Override
     public GameState apply(GameState s) {
     	GameState newState = new GameState(s);
-        newState.peasants.add(new PlanPeasant(0));
+    	int nextID = 0;
+    	
+    	for (PlanPeasant peasant : newState.peasants){
+    		if (peasant.id > nextID) {
+    			nextID = peasant.id;
+    		}
+    	}
+    	for (PlanResource resource : newState.resources){
+    		if (resource.id > nextID) {
+    			nextID = resource.id;
+    		}
+    	}
+    	nextID++;
+        newState.peasants.add(new PlanPeasant(0, 0, 0, nextID));
         newState.gold -= 400;
         newState.parentAction = this;
         return newState;

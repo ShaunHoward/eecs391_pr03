@@ -7,9 +7,14 @@ public class PlanPeasant {
     private PlanResource nextTo;
     private ResourceNode.Type cargoType;
     private int cargoAmount = 0;
+    public int x, y;
+    public int id;
 
-    public PlanPeasant(int cargoAmount) {
+    public PlanPeasant(int cargoAmount, int x, int y, int id) {
     	this.cargoAmount = cargoAmount;
+    	this.x = x;
+    	this.y = y;
+    	this.id = id;
     }
 
     public void setCargoAmount(int amount){

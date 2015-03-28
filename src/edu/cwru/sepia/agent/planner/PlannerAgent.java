@@ -8,6 +8,7 @@ import edu.cwru.sepia.agent.planner.actions.GatherAction;
 import edu.cwru.sepia.agent.planner.actions.MoveAction;
 import edu.cwru.sepia.agent.planner.actions.StripsAction;
 import edu.cwru.sepia.environment.model.history.History;
+import edu.cwru.sepia.environment.model.state.ResourceType;
 import edu.cwru.sepia.environment.model.state.State;
 import edu.cwru.sepia.environment.model.state.Unit;
 
@@ -74,7 +75,7 @@ public class PlannerAgent extends Agent {
 			if (typeName.equals("TownHall"))
 				townHall = id;
 			if (typeName.equals("Peasant"))
-				initial.peasants.add(new PlanPeasant(unit.getCargoAmount()));
+				initial.peasants.add(new PlanPeasant(unit.getCargoAmount(), 0, 0, unit.getID()));
 		}
 
 		// identify resources and create minimal data structures needed for
@@ -88,7 +89,7 @@ public class PlannerAgent extends Agent {
 		GameState goal = new GameState(requiredGold, requiredWood);
 		// add optimal number of peasants to the goal state
 		for (int i = 0; i < getMaxPeasants(); i++)
-			goal.peasants.add(new PlanPeasant(0));
+			goal.peasants.add(new PlanPeasant(0, 0, 0, 0));
 		
 		goalState = goal;
 

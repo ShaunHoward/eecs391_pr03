@@ -14,21 +14,21 @@ public class GatherAction implements StripsAction {
 
 	private int peasantCount; // nuumber of peasants to operate on
 	private Integer targetId; // id of resource node
-	private int x; // x coordinate of resource node
-	private int y; // y coordinate of resource node
+	private int resX; // x coordinate of resource node
+	private int resY; // y coordinate of resource node
 
 	public GatherAction(int k, Integer targetId, int x, int y) {
 		this.peasantCount = k;
 		this.targetId = targetId;
-		this.x = x;
-		this.y = y;
+		this.resX = x;
+		this.resY = y;
 	}
 
 	@Override
 	public boolean preconditionsMet(GameState s, GameState goal) {
 		int i = 0;
 		if (peasantCount <= s.peasants.size()
-				&& s.getResourceWithId(targetId).getAmount() > 0) {
+				&& s.getResourceWithId(targetId).getAmount() >= peasantCount*100) {
 			for (PlanPeasant peasant : s.peasants) {
 				if (isValid(peasant) && ++i == peasantCount){
 					return true;
@@ -43,25 +43,25 @@ public class GatherAction implements StripsAction {
 		int i = 0;
 		GameState newState = new GameState(s);
 		PlanResource res = newState.getResourceWithId(targetId);
-		// if (res.getAmount() >= 100){
 		for (PlanPeasant peasant : newState.peasants) {
-			if (isValid(peasant) && i++ < peasantCount
+			if (isValid(peasant) 
+					&& i++ < peasantCount
 					&& res.getAmount() >= 100) {
 				int value = res.gather();
 				if (value > 0) {
 					peasant.setCargo(res.getType());
 					peasant.setCargoAmount(value);
 				} else {
+					peasant.setCargoAmount(0);
 					peasant.setCargo(null);
 				}
 			}
 		}
-		// }
 		newState.parentAction = this;
 		return newState;
 	}
 
-	public int getK() {
+	public int getPeasantCount() {
 		return peasantCount;
 	}
 
@@ -69,12 +69,12 @@ public class GatherAction implements StripsAction {
 		return targetId;
 	}
 
-	public int getX() {
-		return x;
+	public int getResourceX() {
+		return resX;
 	}
 
-	public int getY() {
-		return y;
+	public int getResourceY() {
+		return resY;
 	}
 
 	private boolean isValid(PlanPeasant peasant) {

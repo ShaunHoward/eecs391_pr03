@@ -1,6 +1,7 @@
 package edu.cwru.sepia.agent.planner.actions;
 
 import edu.cwru.sepia.agent.planner.GameState;
+import edu.cwru.sepia.agent.planner.PEAgent;
 import edu.cwru.sepia.agent.planner.PlanPeasant;
 import edu.cwru.sepia.environment.model.state.ResourceNode;
 
@@ -56,6 +57,7 @@ public class DepositAction implements StripsAction {
     public int getPeasantCount() { return peasantCount; }
 
     private boolean isValid(PlanPeasant peasant) {
+    //	boolean isAdjacent = PEAgent.isAdjacent(peasant., y1, x2, y2)
         return peasant.getNextTo() == null && peasant.getCargo() != null && peasant.getCargoAmount() > 0;
     }
 

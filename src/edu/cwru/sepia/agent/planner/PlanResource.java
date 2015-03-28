@@ -5,7 +5,7 @@ import edu.cwru.sepia.util.DistanceMetrics;
 
 public class PlanResource {
 
-    private int id;                     // ResourceView id
+    public int id;                     // ResourceView id
     private int x;                      // ResourceView x coordinate
     private int y;                      // ResourceView y coordinate
     private ResourceNode.Type type;     // gold or wood

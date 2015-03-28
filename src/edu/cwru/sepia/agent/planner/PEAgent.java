@@ -37,6 +37,7 @@ public class PEAgent extends Agent {
 	private GameState lastState;
 	private int runCount = 0;
 	private static final int MAX_DEPTH = 300;
+	private List<Integer> currIds = new ArrayList<>();
 
 	private List<UnitView> peasants = new ArrayList<>();
 	private List<UnitView> townhalls = new ArrayList<>();
@@ -65,7 +66,7 @@ public class PEAgent extends Agent {
             Unit.UnitView unit = stateView.getUnit(id);
             String typeName = unit.getTemplateView().getName();
             if(typeName.equals("TownHall")) townhallId = id;
-            if(typeName.equals("Peasant")) initial.peasants.add(new PlanPeasant(unit.getCargoAmount()));
+            if(typeName.equals("Peasant")) initial.peasants.add(new PlanPeasant(unit.getCargoAmount(), 0, 0, unit.getID()));
         }
 
         // identify resources and create minimal data structures needed for planning
@@ -139,19 +140,41 @@ public class PEAgent extends Agent {
 		Map<Integer, Action> actions = new HashMap<Integer, Action>();
         List<Integer> peasants = new ArrayList<Integer>();
         
-        //need to use values from stateView for initial state
-        if(plan.isEmpty()){
-        	
-        	GameState initialState = new GameState(lastState);
-        	plan = PlannerAgent.AstarSearch(initialState, plannerAgent.goalState, 5);
-        }
+//        //need to use values from stateView for initial state
+//        if(plan.isEmpty()){
+//    		int currentGold = stateView.getResourceAmount(playernum, ResourceType.GOLD);
+//            int currentWood = stateView.getResourceAmount(playernum, ResourceType.WOOD);
+//            // generate initial state
+//    		GameState initial = new GameState(currentGold, currentWood);
+//
+//    		// identify units and create minimal data structures needed for planning
+//    		for (int id : stateView.getUnitIds(playernum)) {
+//    			Unit.UnitView unit = stateView.getUnit(id);
+//    			String typeName = unit.getTemplateView().getName();
+//    			if (typeName.equals("Peasant"))
+//    				initial.peasants.add(new PlanPeasant(unit.getCargoAmount()));
+//    		}
+//
+//    		// identify resources and create minimal data structures needed for
+//    		// planning
+//    		for (int id : stateView.getAllResourceIds()) {
+//    			initial.resources.add(new PlanResource(stateView
+//    					.getResourceNode(id), stateView.getUnit(townhallId)));
+//    		}
+//
+//        //	GameState initialState = new GameState(lastState);
+//        	plan = PlannerAgent.AstarSearch(initial, plannerAgent.goalState, 5);
+//        }
         GameState nextState = plan.peek();
         StripsAction pAction = nextState.parentAction;
 
         for(int id: stateView.getUnitIds(playernum)) {
             Unit.UnitView unit = stateView.getUnit(id);
             String typeName = unit.getTemplateView().getName();
-            if(typeName.equals("Peasant")) peasants.add(id);
+            if(typeName.equals("Peasant")) {
+            	peasants.add(id);
+                System.out.println("peasant id is: " + unit.getID());
+            }
         }
         
         System.out.println("Current action is: " + pAction.toString());
@@ -184,9 +207,23 @@ public class PEAgent extends Agent {
             
             // get the number of peasants that should be at the destination
             for(PlanPeasant peasant: nextState.peasants) {
-                if(toTownHall && peasant.getNextTo() == null) i++;
-                if(!toTownHall && peasant.getNextTo() != null) i++;
+            //	System.out.println("next to peasant: " + peasant.getNextTo().toString());
+            //	System.out.println("To townhall: " + toTownHall); 
+                if(toTownHall && peasant.getNextTo() == null && peasant.getCargoAmount() > 0) { 
+                	i++;
+                	currIds.add(peasant.id);
+                	System.out.println("peasant moving to townhall: " + peasant.id);
+                }
+                if(!toTownHall && peasant.getNextTo() != null) { 
+                	i++;
+                	currIds.add(peasant.id);
+                System.out.println("added peasant to move: " + peasant.id);
+                }
             }
+            if (mAction.getK() < i) {
+            	i = mAction.getK();
+            }
+            System.out.println("i is: " + i);
             
             // check to see if the right number of peasants are there
             for(int id: peasants) {
@@ -199,15 +236,17 @@ public class PEAgent extends Agent {
             	}
            
                 if(isAdjacent(peasant.getXPosition(), peasant.getYPosition(), destX, destY) &&
-                   ++j <= i) {
+                		peasants.contains(peasant.getID()) && ++j == i) {
                 	done = true;
                 	System.out.println("We are done moving!");
                 }
             }
             
-            if(done || (stateView.resourceAt(destX, destY) == null)) {
+            if(done || (!toTownHall && stateView.resourceAt(destX, destY) == null)) {
+            	System.out.println("removing move action from stack");
                 plan.pop();
                 busy = false;
+                currIds.clear();
             } else if(!busy) {
                 busy = true;
                 
@@ -221,7 +260,7 @@ public class PEAgent extends Agent {
                     if (peasant.getCurrentDurativeAction() == null) {
                     	//Have them move to the desired x and y
                     	if(isAdjacent(peasant.getXPosition(), peasant.getYPosition(),
-                                  originX, originY) && k++ < mAction.getK()) {
+                                  originX, originY) && k++ < mAction.getK() && currIds.contains(peasant.getID())) {
                         	actions.put(id, Action.createCompoundMove(id, destX, destY));
                         	System.out.println("Added move action: " + actions.get(id).toString());
                     	}
@@ -242,17 +281,24 @@ public class PEAgent extends Agent {
             	System.out.println("current peasant id for gather action: " + id);
                 Unit.UnitView peasant = stateView.getUnit(id);
                 if(isAdjacent(peasant.getXPosition(), peasant.getYPosition(),
-                              gAction.getX(), gAction.getY()) &&
+                              gAction.getResourceX(), gAction.getResourceY()) &&
                               peasant.getCargoAmount() > 0 &&
-                              ++i == gAction.getK()){ 
+                              ++i == gAction.getPeasantCount()){ 
                 	done = true;
                 }
             }
             
+        	if (stateView.resourceAt(gAction.getResourceX(), gAction.getResourceY()) == null) {
+        		System.out.println("resource does not exist");
+        		done = true;
+        	}
+            
             if(done) {
             	System.out.println("done with gather action");
                 plan.pop();
+                System.out.println("Stack size is now: " + plan.size());
                 busy = false;
+                currIds.clear();
             } else if(!busy) {
             	//busy = true;
                 int j = 0;
@@ -262,22 +308,17 @@ public class PEAgent extends Agent {
                 	System.out.println("current peasant id for gather action: " + id);
                     Unit.UnitView peasant = stateView.getUnit(id);
                     System.out.println("Peasant cargo amount: " + peasant.getCargoAmount());
-                    if (peasant.getCurrentDurativeAction() == null && peasant.getCargoAmount() <= 0){
+                    
+                    if (peasant.getCurrentDurativeAction() == null && peasant.getCargoAmount() <= 0 &&
+                    		j++ < gAction.getPeasantCount()){
                     	
                     	System.out.println("peasant has no actions or cargo: " + peasant.getID());
                     	System.out.println("Peasant x and y: " + peasant.getXPosition() + ", " + peasant.getYPosition());
-	                  //  if(isAdjacent(peasant.getXPosition(), peasant.getYPosition(),
-	                   //               gAction.getX(), gAction.getY())){ //&& j++ < gAction.getK()){
-                    	if (stateView.resourceAt(gAction.getX(), gAction.getY()) == null) {
-                    		System.out.println("resource does not exist");
-                    		done = true;
-                            plan.pop();
-                            busy = false;
-                    		break;
-                    	}
-	                        actions.put(id, Action.createCompoundGather(id, stateView.resourceAt(gAction.getX(), gAction.getY())));
+	                    if(isAdjacent(peasant.getXPosition(), peasant.getYPosition(),
+	                                 gAction.getResourceX(), gAction.getResourceY())){ //&& j++ < gAction.getK()){
+	                        actions.put(id, Action.createCompoundGather(id, stateView.resourceAt(gAction.getResourceX(), gAction.getResourceY())));
 	                        System.out.println("Added gather action: " + actions.get(id).toString());
-	                   // }
+	                    }
 	                    busy = true;
                     } else {
                     	busy = false;
@@ -310,6 +351,7 @@ public class PEAgent extends Agent {
             	System.out.println("Done with deposit action");
                 plan.pop();
                 busy = false;
+                currIds.clear();
             } else if(!busy) {
                 busy = true;
                 i = 0;
@@ -337,10 +379,13 @@ public class PEAgent extends Agent {
             if(peasants.size() == nextState.peasants.size()) {
                 plan.pop();
                 busy = false;
+                currIds.clear();
             } else if(!busy) {
+            	int id = stateView.getTemplate(playernum, "Peasant").getID();
+            	currIds.add(id);
                 busy = true;
                 // build a peasant
-                actions.put(townhallId, Action.createCompoundProduction(townhallId, stateView.getTemplate(playernum, "Peasant").getID()));
+                actions.put(townhallId, Action.createCompoundProduction(townhallId, id));
             }
         }
         
@@ -420,8 +465,8 @@ public class PEAgent extends Agent {
             // check if each peasant at the target is carrying cargo
             for(UnitView peasant: peasants) {
                 if(isAdjacent(peasant.getXPosition(), peasant.getYPosition(),
-                              gAction.getX(), gAction.getY()) &&
-                   peasant.getCargoAmount() > 0 && ++i == gAction.getK()) done = true;
+                              gAction.getResourceX(), gAction.getResourceY()) &&
+                   peasant.getCargoAmount() > 0 && ++i == gAction.getPeasantCount()) done = true;
             }
             
             if(done) {
@@ -433,8 +478,8 @@ public class PEAgent extends Agent {
                 // order peasants to gather the target resource
                 for(UnitView peasant: peasants) {
                     if(isAdjacent(peasant.getXPosition(), peasant.getYPosition(),
-                                  gAction.getX(), gAction.getY()) &&
-                       j++ < gAction.getK()){
+                                  gAction.getResourceX(), gAction.getResourceY()) &&
+                       j++ < gAction.getPeasantCount()){
                   //      actions.put(peasant.getID(), Action.createCompoundGather(peasant.getID(), stateView.resourceAt(gAction.getX(), gAction.getY())));
                     }
                  }
@@ -476,7 +521,7 @@ public class PEAgent extends Agent {
 		return null;
 	}
 	
-    private boolean isAdjacent(int x1, int y1, int x2, int y2) {
+    public static boolean isAdjacent(int x1, int y1, int x2, int y2) {
         return Math.abs(x1 - x2) + Math.abs(y1 - y2) <= 2;
     }
 	

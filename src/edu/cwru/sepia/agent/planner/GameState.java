@@ -32,9 +32,7 @@ public class GameState implements Comparable<GameState> {
 	public List<PlanResource> resources;
 	public List<PlanPeasant> peasants;
 	public StripsAction parentAction;
-	public int x;
-	public int y;
-	private int depth;
+	private int depth = 0;
 	private int cost = 0;
 	private int totalCost = 0;
 	private GameState parent = null;
@@ -88,7 +86,7 @@ public class GameState implements Comparable<GameState> {
 		// clone each peasant and maintain reference to cloned resource if
 		// needed
 		for (PlanPeasant peasant : parent.peasants) {
-			PlanPeasant newPeasant = new PlanPeasant(peasant.getCargoAmount());
+			PlanPeasant newPeasant = new PlanPeasant(peasant.getCargoAmount(), peasant.x, peasant.y, peasant.id);
 			newPeasant.setCargo(peasant.getCargo());
 			PlanResource nextTo = peasant.getNextTo();
 			if (nextTo != null)
