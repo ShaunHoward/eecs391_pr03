@@ -139,33 +139,48 @@ public class PEAgent extends Agent {
 		runCount++;
 		Map<Integer, Action> actions = new HashMap<Integer, Action>();
         List<Integer> peasants = new ArrayList<Integer>();
+		int currentGold = stateView.getResourceAmount(playernum, ResourceType.GOLD);
+        int currentWood = stateView.getResourceAmount(playernum, ResourceType.WOOD);
         
-//        //need to use values from stateView for initial state
-//        if(plan.isEmpty()){
-//    		int currentGold = stateView.getResourceAmount(playernum, ResourceType.GOLD);
-//            int currentWood = stateView.getResourceAmount(playernum, ResourceType.WOOD);
-//            // generate initial state
-//    		GameState initial = new GameState(currentGold, currentWood);
-//
-//    		// identify units and create minimal data structures needed for planning
-//    		for (int id : stateView.getUnitIds(playernum)) {
-//    			Unit.UnitView unit = stateView.getUnit(id);
-//    			String typeName = unit.getTemplateView().getName();
-//    			if (typeName.equals("Peasant"))
-//    				initial.peasants.add(new PlanPeasant(unit.getCargoAmount()));
-//    		}
-//
-//    		// identify resources and create minimal data structures needed for
-//    		// planning
-//    		for (int id : stateView.getAllResourceIds()) {
-//    			initial.resources.add(new PlanResource(stateView
-//    					.getResourceNode(id), stateView.getUnit(townhallId)));
-//    		}
-//
-//        //	GameState initialState = new GameState(lastState);
-//        	plan = PlannerAgent.AstarSearch(initial, plannerAgent.goalState, 5);
-//        }
+        //need to use values from stateView for initial state
+        if(plan.isEmpty()){
+
+            // generate initial state
+    		GameState initial = new GameState(currentGold, currentWood);
+
+    		// identify units and create minimal data structures needed for planning
+    		for (int id : stateView.getUnitIds(playernum)) {
+    			Unit.UnitView unit = stateView.getUnit(id);
+    			String typeName = unit.getTemplateView().getName();
+    			if (typeName.equals("Peasant"))
+    				initial.peasants.add(new PlanPeasant(unit.getCargoAmount(), 0, 0, unit.getID()));
+    		}
+
+    		// identify resources and create minimal data structures needed for
+    		// planning
+    		for (int id : stateView.getAllResourceIds()) {
+    			initial.resources.add(new PlanResource(stateView
+    					.getResourceNode(id), stateView.getUnit(townhallId)));
+    		}
+
+        //	GameState initialState = new GameState(lastState);
+        	plan = PlannerAgent.AstarSearch(initial, plannerAgent.goalState, 10);
+        }
+        
+        int gold = 0;
+       for (int id : stateView.getUnitIds(playernum)) {
+			Unit.UnitView unit = stateView.getUnit(id);
+			String typeName = unit.getTemplateView().getName();
+			if (typeName.equals("Peasant")){
+				gold += unit.getCargoAmount();
+			}
+			//	initial.peasants.add(new PlanPeasant(unit.getCargoAmount()));
+       }
+      
+       System.out.println("peasants currently have gold: " + gold);
         GameState nextState = plan.peek();
+        System.out.println("current gold is: " + nextState.gold);
+        System.out.println("current wood is: " + nextState.wood);
         StripsAction pAction = nextState.parentAction;
 
         for(int id: stateView.getUnitIds(playernum)) {

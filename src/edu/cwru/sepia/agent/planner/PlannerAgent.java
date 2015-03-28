@@ -94,7 +94,7 @@ public class PlannerAgent extends Agent {
 		goalState = goal;
 
 		// pass initial and goal states to planner and get a plan
-		plan = PlannerAgent.AstarSearch(initial, goal, 50);
+		plan = PlannerAgent.AstarSearch(initial, goal, 110);
 
 		savePlan(getActionPlan(plan));
 

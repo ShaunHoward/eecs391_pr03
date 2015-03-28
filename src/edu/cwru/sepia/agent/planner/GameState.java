@@ -175,9 +175,14 @@ public class GameState implements Comparable<GameState> {
 
 		// assume every resource is 30 steps away
 		score += (cyclesForGold + cyclesForWood) * 60;
-		
-		// add weight for more deposited resources
-		//score += destination.gold + destination.wood;
+//		
+//		if (this.gold > destination.gold){
+//			score += destination.wood;
+//		} else {
+//			score += destination.gold;
+//		}
+//		// add weight for more deposited resources
+//		score += destination.gold + destination.wood;
 
 		return score;
 	}
