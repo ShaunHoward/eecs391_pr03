@@ -31,6 +31,7 @@ public class PlannerAgent extends Agent {
 	final int requiredWood;
 	final int requiredGold;
 	final boolean buildPeasants;
+	public GameState goalState;
 
 	private int townHall; // town hall id
 
@@ -50,8 +51,8 @@ public class PlannerAgent extends Agent {
 					+ " gold amounts and whether peasants should be built");
 		}
 
-		requiredWood = Integer.parseInt(params[0]);
-		requiredGold = Integer.parseInt(params[1]);
+		requiredGold = Integer.parseInt(params[0]);
+		requiredWood = Integer.parseInt(params[1]);
 		buildPeasants = Boolean.parseBoolean(params[2]);
 
 		System.out.println("required wood: " + requiredWood
@@ -73,7 +74,7 @@ public class PlannerAgent extends Agent {
 			if (typeName.equals("TownHall"))
 				townHall = id;
 			if (typeName.equals("Peasant"))
-				initial.peasants.add(new PlanPeasant());
+				initial.peasants.add(new PlanPeasant(unit.getCargoAmount()));
 		}
 
 		// identify resources and create minimal data structures needed for
@@ -87,14 +88,16 @@ public class PlannerAgent extends Agent {
 		GameState goal = new GameState(requiredGold, requiredWood);
 		// add optimal number of peasants to the goal state
 		for (int i = 0; i < getMaxPeasants(); i++)
-			goal.peasants.add(new PlanPeasant());
+			goal.peasants.add(new PlanPeasant(0));
+		
+		goalState = goal;
 
 		// pass initial and goal states to planner and get a plan
-		plan = PlannerAgent.AstarSearch(initial, goal);
+		plan = PlannerAgent.AstarSearch(initial, goal, 50);
 
 		savePlan(getActionPlan(plan));
 
-		peAgent = new PEAgent(playernum, plan, buildPeasants);
+		peAgent = new PEAgent(playernum, plan, buildPeasants, this);
 
 		return peAgent.initialStep(stateView, historyView);
 	}
@@ -111,14 +114,12 @@ public class PlannerAgent extends Agent {
 	}
 
 	// generate a plan using A* to do a forward state space search
-	public static Stack<GameState> AstarSearch(GameState initial, GameState goal) {
+	public static Stack<GameState> AstarSearch(GameState initial, GameState goal, int maxDepth) {
 
 		System.out.println("Planner initialized for:\n" + "\tInitial: "
 				+ initial + "\n" + "\tGoal: " + goal);
 
-		// Limit the depth at
-		int depth = 230;
-		System.out.println("Search depth will be limited to: " + depth);
+		System.out.println("Search depth will be limited to: " + maxDepth);
 
 		addBaseActions(initial, goal.peasants.size());
 
@@ -135,7 +136,7 @@ public class PlannerAgent extends Agent {
 			GameState current = open.poll();
 
 			// return the least cost path if the end has been reached
-			if (current.isGoal(goal) || current.getCost() >= depth) {
+			if (current.isGoal(goal) || current.getDepth() >= maxDepth) {
 				System.out.println("Plan complete");
 				Stack<GameState> aStarPath = buildPath(current);
 				return aStarPath;
@@ -152,6 +153,7 @@ public class PlannerAgent extends Agent {
 
 				neighbor.setParent(current);
 				neighbor.setDepth(current.getDepth() + 1);
+				System.out.println("Current depth is: " + neighbor.getDepth());
 
 				// ignore locations in the closed set
 				if (!closed.contains(neighbor)) {
@@ -203,16 +205,6 @@ public class PlannerAgent extends Agent {
 			actions.add(new BuildPeasantAction());
 	}
 
-	// get valid moves from a given state
-	private static List<GameState> getNeighbors(GameState s, GameState goal) {
-		ArrayList<GameState> result = new ArrayList<GameState>();
-		for (StripsAction a : actions)
-			if (a.preconditionsMet(s, goal)) {
-				result.add(a.apply(s));
-			}
-		return result;
-	}
-
 	// extract shortest path from a given point to the root node by tracing the
 	// parents
 	private static Stack<GameState> buildPath(GameState state) {
@@ -228,12 +220,14 @@ public class PlannerAgent extends Agent {
 	private Stack<StripsAction> getActionPlan(Stack<GameState> plan) {
 		Stack<StripsAction> actionPlan = new Stack<>();
 		List<StripsAction> actionList = new ArrayList<>();
-		Stack<GameState> planCopy = (Stack<GameState>) plan.clone();
-		while (!planCopy.isEmpty()) {
-			actionList.add(planCopy.pop().parentAction);
-		}
-		for (StripsAction action : actionList) {
-			actionPlan.push(action);
+		if (plan != null){
+			Stack<GameState> planCopy = (Stack<GameState>) plan.clone();
+			while (!planCopy.isEmpty()) {
+				actionList.add(planCopy.pop().parentAction);
+			}
+			for (StripsAction action : actionList) {
+				actionPlan.push(action);
+			}	
 		}
 		return actionPlan;
 	}

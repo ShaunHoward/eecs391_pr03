@@ -55,9 +55,8 @@ public class GameState implements Comparable<GameState> {
 	 * @param buildPeasants
 	 *            True if the BuildPeasant action should be considered
 	 */
-	public GameState(State.StateView state, int playernum, int requiredGold,
-			int requiredWood, boolean buildPeasants) {
-		// make new state here
+	public GameState(State.StateView state, GameState previous) {
+//		state.getResourceAmount(arg0, arg1)
 	}
 
 	public GameState(GameState parent, StripsAction action) {
@@ -75,8 +74,6 @@ public class GameState implements Comparable<GameState> {
 	public GameState(int gold, int wood) {
 		this.gold = gold;
 		this.wood = wood;
-		this.x = x;
-		this.y = y;
 		resources = new ArrayList<PlanResource>();
 		peasants = new ArrayList<PlanPeasant>();
 	}
@@ -91,7 +88,7 @@ public class GameState implements Comparable<GameState> {
 		// clone each peasant and maintain reference to cloned resource if
 		// needed
 		for (PlanPeasant peasant : parent.peasants) {
-			PlanPeasant newPeasant = new PlanPeasant();
+			PlanPeasant newPeasant = new PlanPeasant(peasant.getCargoAmount());
 			newPeasant.setCargo(peasant.getCargo());
 			PlanResource nextTo = peasant.getNextTo();
 			if (nextTo != null)
@@ -131,7 +128,7 @@ public class GameState implements Comparable<GameState> {
 	 *         state.
 	 */
 	public boolean isGoal(GameState goal) {
-		return gold == goal.gold && wood == goal.wood;
+		return gold >= goal.gold && wood >= goal.wood;
 	}
 
 	/**
@@ -180,6 +177,9 @@ public class GameState implements Comparable<GameState> {
 
 		// assume every resource is 30 steps away
 		score += (cyclesForGold + cyclesForWood) * 60;
+		
+		// add weight for more deposited resources
+		//score += destination.gold + destination.wood;
 
 		return score;
 	}

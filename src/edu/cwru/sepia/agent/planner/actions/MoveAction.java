@@ -18,14 +18,14 @@ public class MoveAction implements StripsAction {
         Makespan: distance between resource node and town hall
     **/
 
-    private int k;              // number of peasants to operate on
+    private int peasantCount;              // number of peasants to operate on
     public Integer originId,   // id of resource node or null for town hall
                     destId;     // use nullable Integer instead of int
     private int makeSpan;       // cost of executing the action
     public boolean toTownhall;
 
     public MoveAction(int k, GameState s, Integer originId, Integer destId, boolean toTownhall) {
-        this.k = k;
+        this.peasantCount = k;
         this.originId = originId;
         this.destId = destId;
         this.toTownhall = toTownhall;
@@ -37,13 +37,13 @@ public class MoveAction implements StripsAction {
         int i = 0;
         if(destId != null) { // do not allow move to empty resource node, and gather gold before wood
             PlanResource resource = s.getResourceWithId(destId);
-            if(resource.getAmount() < k * 100 ||
+            if(resource.getAmount() < peasantCount * 100 ||
                (resource.getType().equals(ResourceNode.Type.TREE) && s.gold < goal.gold) ||
                (resource.getType().equals(ResourceNode.Type.GOLD_MINE) && s.gold > goal.gold)) return false;
         }
-        if(s.peasants.size() >= k) {
+        if(s.peasants.size() >= peasantCount) {
             for(PlanPeasant peasant: s.peasants)
-                if(isValid(peasant) && ++i == k) return true;
+                if(isValid(peasant) && ++i == peasantCount) return true;
         }
         return false;
     }
@@ -53,7 +53,7 @@ public class MoveAction implements StripsAction {
         int i = 0;
         GameState newState = new GameState(s);
         for(PlanPeasant peasant: newState.peasants)
-            if(isValid(peasant) && i++ < k) {
+            if(isValid(peasant) && i++ < peasantCount) {
                 if(destId == null) peasant.setNextTo(null);
                 else peasant.setNextTo(newState.getResourceWithId(destId));
             }
@@ -61,7 +61,7 @@ public class MoveAction implements StripsAction {
         return newState;
     }
 
-    public int getK() { return k; }
+    public int getK() { return peasantCount; }
 
     public Integer getDestId() { return destId; }
 
@@ -81,6 +81,6 @@ public class MoveAction implements StripsAction {
 
     @Override
     public String toString() {
-        return "MOVE(k:" + k + ", from:" + originId + ", to:" + destId + ")";
+        return "MOVE(k:" + peasantCount + ", from:" + originId + ", to:" + destId + ")";
     }
 }

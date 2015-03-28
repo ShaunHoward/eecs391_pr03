@@ -23,8 +23,11 @@ public class DepositAction implements StripsAction {
     public boolean preconditionsMet(GameState s, GameState goal) {
         int i = 0;
         if(s.peasants.size() >= peasantCount) {
-            for(PlanPeasant peasant: s.peasants)
-                if(isValid(peasant) && ++i == peasantCount) return true;
+            for(PlanPeasant peasant: s.peasants) {
+                if(isValid(peasant) && ++i == peasantCount){
+                	return true;
+                }
+            }
         }
         return false;
     }
@@ -34,17 +37,18 @@ public class DepositAction implements StripsAction {
         int i = 0;
         GameState newState = new GameState(s);
         
-        for(PlanPeasant peasant: newState.peasants)
+        for(PlanPeasant peasant: newState.peasants) {
             if(isValid(peasant) && i++ < peasantCount) {
                 if(peasant.getCargo().equals(ResourceNode.Type.GOLD_MINE)) {
                 	newState.gold += 100;
                 }
-                else{
+                else {
                 	newState.wood += 100;
                 }
                 peasant.setCargo(null);
+                peasant.setCargoAmount(0);
             }
-        
+        }
         newState.parentAction = this;
         return newState;
     }
@@ -52,7 +56,7 @@ public class DepositAction implements StripsAction {
     public int getPeasantCount() { return peasantCount; }
 
     private boolean isValid(PlanPeasant peasant) {
-        return peasant.getNextTo() == null && peasant.getCargo() != null;
+        return peasant.getNextTo() == null && peasant.getCargo() != null && peasant.getCargoAmount() > 0;
     }
 
     @Override

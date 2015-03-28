@@ -20,7 +20,7 @@ public class BuildPeasantAction implements StripsAction {
     @Override
     public GameState apply(GameState s) {
     	GameState newState = new GameState(s);
-        newState.peasants.add(new PlanPeasant());
+        newState.peasants.add(new PlanPeasant(0));
         newState.gold -= 400;
         newState.parentAction = this;
         return newState;
