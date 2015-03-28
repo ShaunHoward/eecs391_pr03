@@ -16,9 +16,11 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
+import java.util.Set;
 import java.util.Stack;
 import java.io.*;
 
@@ -94,7 +96,7 @@ public class PlannerAgent extends Agent {
 		goalState = goal;
 
 		// pass initial and goal states to planner and get a plan
-		plan = PlannerAgent.AstarSearch(initial, goal, 120);
+		plan = PlannerAgent.AstarSearch(initial, goal, 140);
 
 		savePlan(getActionPlan(plan));
 
@@ -125,7 +127,7 @@ public class PlannerAgent extends Agent {
 		addBaseActions(initial, goal.peasants.size());
 
 		PriorityQueue<GameState> open = new PriorityQueue<GameState>();
-		ArrayList<GameState> closed = new ArrayList<GameState>();
+		Set<GameState> closed = new HashSet<GameState>();
 
 		initial.setCost(0);
 		initial.setDepth(0);
@@ -137,15 +139,42 @@ public class PlannerAgent extends Agent {
 			GameState current = open.poll();
 			
             //remove build peasant actions when we have max peasants
-			if (current.peasants.size() >= goal.peasants.size()){
+			if (current.peasants.size() >= goal.peasants.size() && actions.size() != 5 * current.peasants.size()){
 				ArrayList<StripsAction> actionsCopy = new ArrayList<>(actions);
 				for (StripsAction action : actionsCopy){
 					if (action instanceof BuildPeasantAction){
 						actions.remove(action);
 						System.out.println("removing build peasant actions");
 					}
+					if (action instanceof MoveAction){
+						MoveAction mAction = (MoveAction)action;
+						if (mAction.getK() < goal.peasants.size() - 1){
+							actions.remove(action);
+						}
+					}
+					if (action instanceof GatherAction){
+						GatherAction gAction = (GatherAction)action;
+						if (gAction.getPeasantCount() < goal.peasants.size() - 1){
+							actions.remove(action);
+						}
+					}
+					if (action instanceof DepositAction){
+						DepositAction dAction = (DepositAction)action;
+						if (dAction.getPeasantCount() < goal.peasants.size() - 1){
+							actions.remove(action);
+						}
+					}
 				}
 			}
+//			if (current.gold > goal.gold){
+//				ArrayList<StripsAction> actionsCopy = new ArrayList<>(actions);
+//				for (StripsAction action : actionsCopy){
+//					if (action instanceof BuildPeasantAction){
+//						actions.remove(action);
+//						System.out.println("removing build peasant actions");
+//					}
+//				}
+//			}
 
 			// return the least cost path if the end has been reached
 			if (current.isGoal(goal) || current.getDepth() >= maxDepth) {
@@ -171,7 +200,7 @@ public class PlannerAgent extends Agent {
 				if (!closed.contains(neighbor)) {
 
 					int tempScore = current.getCost()
-							+ neighbor.parentAction.getMakeSpan();
+							+ neighbor.parentAction.getMakeSpan();// - neighbor.getDepth();
 
 					// explore low cost paths
 					if (!open.contains(neighbor)

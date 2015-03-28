@@ -175,14 +175,16 @@ public class GameState implements Comparable<GameState> {
 
 		// assume every resource is 30 steps away
 		score += (cyclesForGold + cyclesForWood) * 60;
-//		
-//		if (this.gold > destination.gold){
-//			score += destination.wood;
-//		} else {
-//			score += destination.gold;
-//		}
-//		// add weight for more deposited resources
-//		score += destination.gold + destination.wood;
+		
+		score -= wood;
+		
+		//if (this.gold > destination.gold){
+		//	score -= this.wood;
+	//	} else {
+		//	score -= this.gold;
+		//}
+		// add weight for more deposited resources
+		//score += destination.gold + destination.wood;
 
 		return score;
 	}
@@ -245,7 +247,9 @@ public class GameState implements Comparable<GameState> {
 	 */
 	@Override
 	public int compareTo(GameState o) {
-		return (int) (this.getTotalCost() - o.getTotalCost());
+		int thisValue = this.getTotalCost(); //- this.gold - this.wood * 20;
+		int thatValue = o.getTotalCost(); //- o.gold - o.wood * 20;
+		return (int) (thisValue - thatValue);
 	}
 
 	/**
@@ -265,7 +269,8 @@ public class GameState implements Comparable<GameState> {
 		GameState s = (GameState) o;
 		// if (s.getCost() == this.getCost() &&
 
-		if (s.gold == this.gold && s.wood == this.wood) {
+		if (s.gold == this.gold && s.wood == this.wood &&
+				this.getTotalCost() == s.getTotalCost()) {
 			return true;
 		}
 

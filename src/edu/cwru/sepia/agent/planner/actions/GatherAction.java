@@ -85,7 +85,7 @@ public class GatherAction implements StripsAction {
 
 	@Override
 	public int getMakeSpan() {
-		return -peasantCount;
+		return 1; //-peasantCount;
 	}
 
 	@Override
