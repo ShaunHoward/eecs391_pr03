@@ -94,7 +94,7 @@ public class PlannerAgent extends Agent {
 		goalState = goal;
 
 		// pass initial and goal states to planner and get a plan
-		plan = PlannerAgent.AstarSearch(initial, goal, 110);
+		plan = PlannerAgent.AstarSearch(initial, goal, 120);
 
 		savePlan(getActionPlan(plan));
 
@@ -135,6 +135,17 @@ public class PlannerAgent extends Agent {
 		while (!open.isEmpty()) {
 
 			GameState current = open.poll();
+			
+            //remove build peasant actions when we have max peasants
+			if (current.peasants.size() >= goal.peasants.size()){
+				ArrayList<StripsAction> actionsCopy = new ArrayList<>(actions);
+				for (StripsAction action : actionsCopy){
+					if (action instanceof BuildPeasantAction){
+						actions.remove(action);
+						System.out.println("removing build peasant actions");
+					}
+				}
+			}
 
 			// return the least cost path if the end has been reached
 			if (current.isGoal(goal) || current.getDepth() >= maxDepth) {
