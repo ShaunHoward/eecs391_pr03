@@ -166,15 +166,6 @@ public class PlannerAgent extends Agent {
 					}
 				}
 			}
-//			if (current.gold > goal.gold){
-//				ArrayList<StripsAction> actionsCopy = new ArrayList<>(actions);
-//				for (StripsAction action : actionsCopy){
-//					if (action instanceof BuildPeasantAction){
-//						actions.remove(action);
-//						System.out.println("removing build peasant actions");
-//					}
-//				}
-//			}
 
 			// return the least cost path if the end has been reached
 			if (current.isGoal(goal) || current.getDepth() >= maxDepth) {
