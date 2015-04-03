@@ -178,66 +178,43 @@ public class PlannerAgent extends Agent {
 
 			GameState current = open.poll();
 			
-            //remove build peasant actions when we have max peasants
+            //Remove actions that are no longer useful to the state space search
 			if (current.peasants.size() >= goal.peasants.size() && actions.size() != 5 * current.peasants.size()){
-				ArrayList<StripsAction> actionsCopy = new ArrayList<>(actions);
-				for (StripsAction action : actionsCopy){
-					if (action instanceof BuildPeasantAction){
-						actions.remove(action);
-						System.out.println("removing build peasant actions");
-					}
-					if (action instanceof MoveAction){
-						MoveAction mAction = (MoveAction)action;
-						if (mAction.getK() < goal.peasants.size() - 1){
-							actions.remove(action);
-						}
-					}
-					if (action instanceof GatherAction){
-						GatherAction gAction = (GatherAction)action;
-						if (gAction.getPeasantCount() < goal.peasants.size() - 1){
-							actions.remove(action);
-						}
-					}
-					if (action instanceof DepositAction){
-						DepositAction dAction = (DepositAction)action;
-						if (dAction.getPeasantCount() < goal.peasants.size() - 1){
-							actions.remove(action);
-						}
-					}
-				}
+				removeCostlyActions(goal.peasants.size());
 			}
 
-			// return the least cost path if the end has been reached
+			//Build the least cost path when the goal or depth is met
 			if (current.isGoal(goal) || current.getDepth() >= maxDepth) {
 				System.out.println("Plan complete");
 				Stack<GameState> aStarPath = buildPath(current);
 				return aStarPath;
 			}
 
-			// move expanded position to the closed list
+			//The expanded state is now in the closed set
 			closed.add(current);
 
 			System.out.println("Expanding " + current.getCost() + ": "
 					+ current);
 
-			// evaluate next possible moves from current location
+			//Generate the children of this game state to evaluate all possible next actions
 			for (GameState neighbor : current.generateChildren(goal, actions)) {
 
+				//set up neighbor node from the current node
 				neighbor.setParent(current);
 				neighbor.setDepth(current.getDepth() + 1);
 				System.out.println("Current depth is: " + neighbor.getDepth());
 
-				// ignore locations in the closed set
+				//We cannot operate on game states that are closed
 				if (!closed.contains(neighbor)) {
 
+					//Calculate a new score based on the cost from start and the make span
+					//of the neighbor's parent STRIPS action.
 					int tempScore = current.getCost()
 							+ neighbor.parentAction.getMakeSpan();// - neighbor.getDepth();
 
-					// explore low cost paths
+					//We expand the nodes will low cost
 					if (!open.contains(neighbor)
 							|| tempScore <= neighbor.getCost()) {
-						// track the path
-						neighbor.setParent(current);
 
 						// calculate cost from parent
 						neighbor.setCost(tempScore);
@@ -246,15 +223,55 @@ public class PlannerAgent extends Agent {
 						neighbor.setTotalCost(tempScore
 								+ neighbor.heuristic(goal));
 
-						if (!open.contains(neighbor)) {
-							open.add(neighbor);
+						if (open.contains(neighbor)) {
+							open.remove(neighbor);
 						}
+						open.add(neighbor);
 					}
+				} else {
+					System.out.println("is this ever even hit?");
 				}
 			}
 		}
 		System.out.print("No available path");
 		return null;
+	}
+
+	/**
+	 * Removes actions that are no longer beneficial to the state space search based
+	 * on the current number of peasants in the game. This is typically called when there
+	 * are 3 peasants to eliminate the 1 peasant actions.
+	 * 
+	 * @param numPeasants - the number of peasants in the current search state 
+	 */
+	private static void removeCostlyActions(int numPeasants) {
+		ArrayList<StripsAction> actionsCopy = new ArrayList<>(actions);
+		
+		//Remove actions that are no longer beneficial to the state search
+		for (StripsAction action : actionsCopy){
+			if (action instanceof BuildPeasantAction){
+				actions.remove(action);
+				System.out.println("removing build peasant actions");
+			}
+			if (action instanceof MoveAction){
+				MoveAction mAction = (MoveAction)action;
+				if (mAction.getK() < numPeasants - 1){
+					actions.remove(action);
+				}
+			}
+			if (action instanceof GatherAction){
+				GatherAction gAction = (GatherAction)action;
+				if (gAction.getPeasantCount() < numPeasants - 1){
+					actions.remove(action);
+				}
+			}
+			if (action instanceof DepositAction){
+				DepositAction dAction = (DepositAction)action;
+				if (dAction.getPeasantCount() < numPeasants - 1){
+					actions.remove(action);
+				}
+			}
+		}
 	}
 
 	/**

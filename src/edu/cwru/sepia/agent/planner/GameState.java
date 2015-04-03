@@ -259,23 +259,23 @@ public class GameState implements Comparable<GameState> {
 	 *            The game state to compare
 	 * @return True if this state equals the other state, false otherwise.
 	 */
-	@Override
-	public boolean equals(Object o) {
-
-		if (o == null || !(o instanceof State)) {
-			return false;
-		}
-
-		GameState s = (GameState) o;
-		// if (s.getCost() == this.getCost() &&
-
-		if (s.gold == this.gold && s.wood == this.wood &&
-				this.getTotalCost() == s.getTotalCost()) {
-			return true;
-		}
-
-		return false;
-	}
+//	@Override
+//	public boolean equals(Object o) {
+//
+//		if (o == null || !(o instanceof GameState)) {
+//			return false;
+//		}
+//
+//		GameState s = (GameState) o;
+//		// if (s.getCost() == this.getCost() &&
+//
+//		if (s.gold == this.gold && s.wood == this.wood) {
+//	//			this.getTotalCost() == s.getTotalCost()) {
+//			return true;
+//		}
+//
+//		return false;
+//	}
 
 	/**
 	 * This is necessary to use the GameState as a key in a HashSet or HashMap.
