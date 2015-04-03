@@ -22,13 +22,13 @@ public class MoveAction implements StripsAction {
     public Integer originId,   // id of resource node or null for town hall
                     destId;     // use nullable Integer instead of int
     private int makeSpan;       // cost of executing the action
-    public boolean toTownhall;
+    private boolean toTownHall;
 
     public MoveAction(int k, GameState s, Integer originId, Integer destId, boolean toTownhall) {
         this.peasantCount = k;
         this.originId = originId;
         this.destId = destId;
-        this.toTownhall = toTownhall;
+        this.toTownHall = toTownhall;
         makeSpan = s.getResourceWithId(destId == null ? originId : destId).getDistance();
     }
 
@@ -62,6 +62,10 @@ public class MoveAction implements StripsAction {
             }
         newState.parentAction = this;
         return newState;
+    }
+    
+    public boolean toTownHall(){
+    	return this.toTownHall;
     }
 
     public int getK() { return peasantCount; }

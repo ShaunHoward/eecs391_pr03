@@ -127,7 +127,7 @@ public class PlannerAgent extends Agent {
 		savePlan(getActionPlan(plan));
 
 		//Feed the plan to an execution agent to play in SEPIA
-		peAgent = new PEAgent(playernum, plan, buildPeasants, this);
+		peAgent = new PEAgent(playernum, plan);
 
 		//Call the agent to execute
 		return peAgent.initialStep(stateView, historyView);
@@ -144,7 +144,17 @@ public class PlannerAgent extends Agent {
 		return peAgent.middleStep(stateView, historyView);
 	}
 
-	// generate a plan using A* to do a forward state space search
+	/**
+	 * The A* search for the resource collection game in SEPIA. It find the best actions to take
+	 * from the initial state to the goal state. A priority queue tracks the game states and orders
+	 * them by their make spans as well as heuristic and cost values. When game states have been 
+	 * expanded, 
+	 * 
+	 * @param initial - the state to initialize search on
+	 * @param goal - the goal state with the required amount of gold and wood
+	 * @param maxDepth - the maximum depth to in the game state generation tree
+	 * @return the strips action plan in form of game state with parents as strips-like actions
+	 */
 	public static Stack<GameState> AstarSearch(GameState initial, GameState goal, int maxDepth) {
 
 		System.out.println("Planner initialized for:\n" + "\tInitial: "
@@ -158,6 +168,7 @@ public class PlannerAgent extends Agent {
 		PriorityQueue<GameState> open = new PriorityQueue<GameState>();
 		Set<GameState> closed = new HashSet<GameState>();
 
+		//Initialize the first state and the priority queue
 		initial.setCost(0);
 		initial.setDepth(0);
 		initial.setTotalCost(initial.heuristic(goal));
