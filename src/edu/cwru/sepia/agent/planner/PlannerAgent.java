@@ -177,9 +177,11 @@ public class PlannerAgent extends Agent {
 		while (!open.isEmpty()) {
 
 			GameState current = open.poll();
-			if (closed.contains(current))
+			if (closed.contains(current)) {
+				System.out.println("closed contains the current");
 				continue;
-			
+			}
+					
             //Remove actions that are no longer useful to the state space search
 			if (current.peasants.size() >= goal.peasants.size() && actions.size() != 5 * current.peasants.size()){
 				removeCostlyActions(current.peasants.size());
@@ -214,23 +216,24 @@ public class PlannerAgent extends Agent {
 					int tentativeScore = current.getCost()
 							+ neighbor.parentAction.getMakeSpan();
 
-					//We expand the nodes will low cost
+					//We expand the nodes with lower cost than previously visited nodes
 					if (!open.contains(neighbor)
 							|| tentativeScore < neighbor.getCost()) {
 
-						// calculate cost from parent
+						//Set the tentative cost to this node
 						neighbor.setCost(tentativeScore);
 
-						// calculate heuristic cost
+						//Determine the total cost, including tentative and heuristic cost
 						neighbor.setTotalCost(tentativeScore
 								+ neighbor.heuristic(goal));
-
-						if (open.contains(neighbor)) {
-							open.remove(neighbor);
-							System.out.println("another place not hit ever");
-						}
+						
+                        //Add the neighbor to the open queue
 						open.add(neighbor);
+					} else {
+						System.out.println("Open contains the neighbor");
 					}
+				} else {
+					System.out.println("Closed contains the neighbor");
 				}
 			}
 		}
