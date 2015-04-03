@@ -177,6 +177,8 @@ public class PlannerAgent extends Agent {
 		while (!open.isEmpty()) {
 
 			GameState current = open.poll();
+			if (closed.contains(current))
+				continue;
 			
             //Remove actions that are no longer useful to the state space search
 			if (current.peasants.size() >= goal.peasants.size() && actions.size() != 5 * current.peasants.size()){
@@ -189,7 +191,7 @@ public class PlannerAgent extends Agent {
 				Stack<GameState> aStarPath = buildPath(current);
 				return aStarPath;
 			}
-
+			
 			//The expanded state is now in the closed set
 			closed.add(current);
 
@@ -209,24 +211,27 @@ public class PlannerAgent extends Agent {
 
 					//Calculate a new score based on the cost from start and the make span
 					//of the neighbor's parent STRIPS action.
-					int tempScore = current.getCost()
-							+ neighbor.parentAction.getMakeSpan();// - neighbor.getDepth();
+					int tentativeScore = current.getCost()
+							+ neighbor.parentAction.getMakeSpan();
 
 					//We expand the nodes will low cost
 					if (!open.contains(neighbor)
-							|| tempScore <= neighbor.getCost()) {
+							|| tentativeScore < neighbor.getCost()) {
 
 						// calculate cost from parent
-						neighbor.setCost(tempScore);
+						neighbor.setCost(tentativeScore);
 
 						// calculate heuristic cost
-						neighbor.setTotalCost(tempScore
+						neighbor.setTotalCost(tentativeScore
 								+ neighbor.heuristic(goal));
 
 						if (open.contains(neighbor)) {
 							open.remove(neighbor);
+							System.out.println("another place not hit ever");
 						}
 						open.add(neighbor);
+					} else {
+						
 					}
 				} else {
 					System.out.println("is this ever even hit?");

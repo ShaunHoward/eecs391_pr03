@@ -18,6 +18,7 @@ public class MoveAction implements StripsAction {
         Makespan: distance between resource node and town hall
     **/
 
+	public static final int ACTION = 1;
     private int peasantCount;              // number of peasants to operate on
     public Integer originId,   // id of resource node or null for town hall
                     destId;     // use nullable Integer instead of int
@@ -90,4 +91,13 @@ public class MoveAction implements StripsAction {
     public String toString() {
         return "MOVE(k:" + peasantCount + ", from:" + originId + ", to:" + destId + ")";
     }
+    
+	@Override
+	public boolean equals(Object o){
+		if (o != null && o instanceof MoveAction){
+			MoveAction a = (MoveAction)o;
+			return a.ACTION == this.ACTION && a.originId == this.originId && a.destId == this.destId && a.peasantCount == this.peasantCount;
+		}
+		return false;
+	}
 }

@@ -269,9 +269,12 @@ public class GameState implements Comparable<GameState> {
 //		GameState s = (GameState) o;
 //		// if (s.getCost() == this.getCost() &&
 //
-//		if (s.gold == this.gold && s.wood == this.wood) {
-//	//			this.getTotalCost() == s.getTotalCost()) {
-//			return true;
+//		if (this.parentAction != null && s.parentAction != null){
+//			if (s.gold == this.gold && s.wood == this.wood &&
+//					s.parentAction.equals(this.parentAction)){
+//				//	this.getTotalCost() == s.getTotalCost()) {
+//				return true;
+//			}	
 //		}
 //
 //		return false;

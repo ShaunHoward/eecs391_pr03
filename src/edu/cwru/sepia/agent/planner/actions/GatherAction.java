@@ -12,6 +12,7 @@ public class GatherAction implements StripsAction {
 	 * Makespan: 1
 	 **/
 
+	public static final int ACTION = 2;
 	private int peasantCount; // nuumber of peasants to operate on
 	private Integer targetId; // id of resource node
 	private int resX; // x coordinate of resource node
@@ -91,5 +92,14 @@ public class GatherAction implements StripsAction {
 	@Override
 	public String toString() {
 		return "GATHER(k:" + peasantCount + ", id:" + targetId + ")";
+	}
+	
+	@Override
+	public boolean equals(Object o){
+		if (o != null && o instanceof GatherAction){
+			GatherAction a = (GatherAction)o;
+			return a.ACTION == this.ACTION && a.targetId == this.targetId && a.peasantCount == this.peasantCount;
+		}
+		return false;
 	}
 }
