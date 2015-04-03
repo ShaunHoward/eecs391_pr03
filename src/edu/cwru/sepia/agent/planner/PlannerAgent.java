@@ -8,7 +8,6 @@ import edu.cwru.sepia.agent.planner.actions.GatherAction;
 import edu.cwru.sepia.agent.planner.actions.MoveAction;
 import edu.cwru.sepia.agent.planner.actions.StripsAction;
 import edu.cwru.sepia.environment.model.history.History;
-import edu.cwru.sepia.environment.model.state.ResourceType;
 import edu.cwru.sepia.environment.model.state.State;
 import edu.cwru.sepia.environment.model.state.Unit;
 
@@ -25,25 +24,45 @@ import java.util.Stack;
 import java.io.*;
 
 /**
+ * An agent that plans for a resource collection game in SEPIA using A* search.
+ * This agent searches through possible actions of peasants for a certain number of
+ * peasants. We determine the best outcome of actions based on combindations of their
+ * make spans and heuristic weights. 
+ * The actions possible for each peasant are the following:
+ * Move from X to Y
+ * Gather Gold or Wood
+ * Deposit Gold or Wood
+ * 
+ * A peasant can also do nothing.
+ * The maximum number of peasants that can play is 3. 
+ * The required wood and gold criteria determine win a game is won.
+ * This planner creates the action plan by linking SEPIA game data
+ * with a STRIPS-like action plan. The Planner Execution Agent then
+ * translates that plan back into SEPIA actions.
+ * 
  * @author Shaun Howard (smh150), Matt Swartwout(mws85)
  */
 public class PlannerAgent extends Agent {
 
 	private static final long serialVersionUID = 1L;
 
+	//Criteria that determines when the peasants win
 	final int requiredWood;
 	final int requiredGold;
 	final boolean buildPeasants;
+	
+	//The goal state of the game
 	public GameState goalState;
 
-	private int townHall; // town hall id
+	private int townHallID;
 
-	private Stack<GameState> plan; // list of planned actions
+	//The game plan to enact in the SEPIA engine
+	private Stack<GameState> plan; 
 
+	//The list of actions that will be tried on the A* chosen game states
 	private static ArrayList<StripsAction> actions;
 
-	// Your PEAgent implementation. This prevents you from having to parse the
-	// text file representation of your plan.
+	//Prevents having to parse the text file representation of our plan
 	PEAgent peAgent;
 
 	public PlannerAgent(int playernum, String[] params) {
@@ -67,41 +86,50 @@ public class PlannerAgent extends Agent {
 	public Map<Integer, Action> initialStep(State.StateView stateView,
 			History.HistoryView historyView) {
 
-		// generate initial state
+		//Initial state for the search, starting with gold and wood at 0.
 		GameState initial = new GameState(0, 0);
 
-		// identify units and create minimal data structures needed for planning
+		//Recognize all units on the game map
 		for (int id : stateView.getUnitIds(playernum)) {
 			Unit.UnitView unit = stateView.getUnit(id);
 			String typeName = unit.getTemplateView().getName();
 			if (typeName.equals("TownHall"))
-				townHall = id;
+				townHallID = id;
 			if (typeName.equals("Peasant"))
 				initial.peasants.add(new PlanPeasant(unit.getCargoAmount(), 0, 0, unit.getID()));
 		}
 
-		// identify resources and create minimal data structures needed for
-		// planning
+		//Find all resource locations on the map
 		for (int id : stateView.getAllResourceIds()) {
 			initial.resources.add(new PlanResource(stateView
-					.getResourceNode(id), stateView.getUnit(townHall)));
+					.getResourceNode(id), stateView.getUnit(townHallID)));
 		}
 
-		// generate goal state
+		//Goal state of the A* search, winning with required gold and wood values
 		GameState goal = new GameState(requiredGold, requiredWood);
-		// add optimal number of peasants to the goal state
+		
+		//We find the best number of peasants to add to our mock game state
 		for (int i = 0; i < getMaxPeasants(); i++)
 			goal.peasants.add(new PlanPeasant(0, 0, 0, 0));
 		
+		//Track the goal globally
 		goalState = goal;
 
-		// pass initial and goal states to planner and get a plan
+		/**
+		 * Obtain a plan from our A* search implementation, limit to depth 140
+		 * Note that search on buildPeasants=true will take approx. 15 sec.
+		 * to complete after starting the game. Since the game tree is
+		 * very big for 3 peasants, this is tolerable to us.
+		 */
 		plan = PlannerAgent.AstarSearch(initial, goal, 140);
 
+		//Prints the action list to a text file named "plan"
 		savePlan(getActionPlan(plan));
 
+		//Feed the plan to an execution agent to play in SEPIA
 		peAgent = new PEAgent(playernum, plan, buildPeasants, this);
 
+		//Call the agent to execute
 		return peAgent.initialStep(stateView, historyView);
 	}
 
@@ -124,6 +152,7 @@ public class PlannerAgent extends Agent {
 
 		System.out.println("Search depth will be limited to: " + maxDepth);
 
+		//Adds generic actions to the action list
 		addBaseActions(initial, goal.peasants.size());
 
 		PriorityQueue<GameState> open = new PriorityQueue<GameState>();
@@ -217,28 +246,55 @@ public class PlannerAgent extends Agent {
 		return null;
 	}
 
-	private static void addBaseActions(GameState s, int maxPeasants) {
+	/**
+	 * Adds base actions such as:
+	 * move entity from x to y
+	 * gather resource
+	 * deposit resource
+	 * 
+	 * to the global actions list
+	 * 
+	 * Produces these actions for from 1 and 3 peasants.
+	 * 
+	 * @param state - the current state in the game
+	 * @param maxPeasants - the maximum number of peasants to build
+	 */
+	private static void addBaseActions(GameState state, int maxPeasants) {
+		
 		actions = new ArrayList<StripsAction>();
-		// move to, gather, and return from each resource node
-		for (PlanResource resource : s.resources) {
+		
+		//Create actions for moving to destinations and gathering resources
+		for (PlanResource resource : state.resources) {
 			int resId = resource.getId();
 			for (int i = 1; i <= maxPeasants; i++) {
-				actions.add(new MoveAction(i, s, null, resId, false));
+				actions.add(new MoveAction(i, state, null, resId, false));
 				actions.add(new GatherAction(i, resId, resource.getX(),
 						resource.getY()));
-				actions.add(new MoveAction(i, s, resId, null, true));
+				actions.add(new MoveAction(i, state, resId, null, true));
 			}
 		}
-		// deposit cargo
+		
+		//Add a deposit resource action in case we have a resource
 		for (int i = 1; i <= maxPeasants; i++)
 			actions.add(new DepositAction(i));
-		// build peasant
+		
+		//Add a new build peasant action in case we have the resources
 		if (maxPeasants > 1)
 			actions.add(new BuildPeasantAction());
 	}
 
-	// extract shortest path from a given point to the root node by tracing the
-	// parents
+	/**
+	 * Builds the shortest path through the game in order to
+	 * produce a stack that the planner execution agent can
+	 * enact in SEPIA. The state that is given should have been
+	 * produced by the A* search in this planner. The end order
+	 * of the stack will have the initial game state at the top
+	 * and the goal state at the bottom.
+	 * 
+	 * @param state - the goal state of the game
+	 * @return a stack of game states that are ordered ascending numerical
+	 * according to position in time made.
+	 */
 	private static Stack<GameState> buildPath(GameState state) {
 		Stack<GameState> path = new Stack<>();
 		GameState curr = state;
@@ -249,18 +305,34 @@ public class PlannerAgent extends Agent {
 		return path;
 	}
 
+	/**
+	 * Gets the action plan from a game state plan. The actions
+	 * are in the STRIPS-like form. 
+	 * 
+	 * @param plan - the mock game state plan
+	 * @return the strips action plan to enact in the game
+	 */
 	private Stack<StripsAction> getActionPlan(Stack<GameState> plan) {
 		Stack<StripsAction> actionPlan = new Stack<>();
 		List<StripsAction> actionList = new ArrayList<>();
+		
+		//Only convert to strips when we have a game state plan
 		if (plan != null){
+			//we don't want to alter the actual plan
 			Stack<GameState> planCopy = (Stack<GameState>) plan.clone();
+			
+			//Add all state actions to the action list in forward order
 			while (!planCopy.isEmpty()) {
 				actionList.add(planCopy.pop().parentAction);
 			}
-			for (StripsAction action : actionList) {
-				actionPlan.push(action);
+			System.out.println(actionList.toString());
+			
+			//Add all state actions to the action stack in reverse order
+			for (int i = actionList.size() - 1; i >= 0; i--) {
+				actionPlan.push(actionList.get(i));
 			}	
 		}
+		
 		return actionPlan;
 	}
 
@@ -311,17 +383,13 @@ public class PlannerAgent extends Agent {
 		}
 	}
 
-	/*
-	 * Assuming each peasant takes one cycle of 4 actions
-	 * (move-gather-move-deposit) to collect 100 of a resource, and building a
-	 * new peasant takes 1 action, amount of resources gathered over x cycles
-	 * ... 1 peasant: gather at 100x rate 100x 2 peasants: 4 cycles at 100x
-	 * rate, then gather at 200x rate 200(x - 4.25) 3 peasants: 4 cycles at 100x
-	 * rate, 2 cycles at 200x rate, then gather at 300x rate 300(x - 6.5) 100x
-	 * and 200(x - 4.25) intersect at y = 850, so 1 peasant is optimal for <=
-	 * 800 resources 200(x - 4.25) and 300(x - 6.5) intersect at y = 1350, so 2
-	 * peasants are optimal for <= 1200 resources These values do not change
-	 * between the given scenarios so they can be precomputed.
+	/**
+	 * Let's assume that a peasant takes one cycle of 4 actions
+	 * (move-gather-move-deposit) in order to collect 100 parts of a resource.
+	 * Building a new peasant takes 1 action and 300 gold.
+	 * We find that 1 peasant is optimal for <= 800 resources.
+	 * Then 2 peasants are optimal for <= 1200 resources. 3 will take on the remaining.
+	 * These values remain the same throughout the game.
 	 */
 	private int getMaxPeasants() {
 		if (!buildPeasants || (requiredGold + requiredWood) <= 800)
