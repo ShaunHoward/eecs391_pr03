@@ -175,8 +175,8 @@ public class PEAgent extends Agent {
 					System.out.println("added peasant to move: " + peasant.id);
 				}
 			}
-			if (mAction.getK() < i) {
-				i = mAction.getK();
+			if (mAction.getPeasantCount() < i) {
+				i = mAction.getPeasantCount();
 			}
 
 			// check to see if the right number of peasants are there
@@ -224,7 +224,7 @@ public class PEAgent extends Agent {
 						// Have them move to the desired x and y
 						if (isAdjacent(peasant.getXPosition(),
 								peasant.getYPosition(), originX, originY)
-								&& k++ < mAction.getK()
+								&& k++ < mAction.getPeasantCount()
 								&& currIds.contains(peasant.getID())) {
 							actions.put(id,
 									Action.createCompoundMove(id, destX, destY));

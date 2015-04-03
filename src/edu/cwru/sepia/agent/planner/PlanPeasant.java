@@ -44,4 +44,14 @@ public class PlanPeasant {
         str += ")";
         return str;
     }
+    
+    @Override
+    public boolean equals(Object o){
+    	if (o == null || !(o instanceof PlanPeasant)){
+    		return false;
+    	} else {
+    		PlanPeasant p = (PlanPeasant)o;
+    		return p.x == this.x && p.y == this.y && p.cargoAmount == this.cargoAmount && p.cargoType == this.cargoType;
+    	}
+    }
 }

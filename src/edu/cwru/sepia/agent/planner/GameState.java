@@ -93,6 +93,7 @@ public class GameState implements Comparable<GameState> {
 				newPeasant.setNextTo(getResourceWithId(nextTo.getId()));
 			peasants.add(newPeasant);
 		}
+		this.parent = parent;
 	}
 
 	public void setParent(GameState parent) {
@@ -253,32 +254,46 @@ public class GameState implements Comparable<GameState> {
 	}
 
 	/**
-	 * This will be necessary to use the GameState as a key in a Set or Map.
+	 * Determine if two game states are equal based on their
+	 * desired gold value, wood value, parent actions, and the
+	 * equality of their peasants.
 	 *
-	 * @param o
-	 *            The game state to compare
+	 * @param o - The game state to compare
 	 * @return True if this state equals the other state, false otherwise.
 	 */
-//	@Override
-//	public boolean equals(Object o) {
-//
-//		if (o == null || !(o instanceof GameState)) {
-//			return false;
-//		}
-//
-//		GameState s = (GameState) o;
-//		// if (s.getCost() == this.getCost() &&
-//
-//		if (this.parentAction != null && s.parentAction != null){
-//			if (s.gold == this.gold && s.wood == this.wood &&
-//					s.parentAction.equals(this.parentAction)){
-//				//	this.getTotalCost() == s.getTotalCost()) {
-//				return true;
-//			}	
-//		}
-//
-//		return false;
-//	}
+	@Override
+	public boolean equals(Object o) {
+
+		if (o == null || !(o instanceof GameState)) {
+			return false;
+		}
+
+		GameState s = (GameState) o;
+	
+		//Determine if the states are equal
+		if (this.parentAction != null && s.parentAction != null){
+			if (s.gold == this.gold && s.wood == this.wood &&
+					s.parentAction.equals(this.parentAction) &&
+					this.peasants.size() == s.peasants.size()){
+				
+				//make sure each peasant is equal between states
+				for (int i = 0; i < peasants.size(); i++){
+					
+					//the peasants are not equal, so these states are not equal
+					if (!this.peasants.get(i).equals(s.peasants.get(i))){
+						System.out.println("States are not equal");
+						return false;
+					}
+				}
+				
+				System.out.println("States are equal");
+				return true;
+			}	
+		}
+		
+		//otherwise, they are not equal
+		return false;
+	}
 
 	/**
 	 * This is necessary to use the GameState as a key in a HashSet or HashMap.

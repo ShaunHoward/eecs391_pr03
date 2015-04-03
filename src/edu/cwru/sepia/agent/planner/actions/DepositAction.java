@@ -14,7 +14,6 @@ public class DepositAction implements StripsAction {
         Makespan: 1
     **/
 
-	public static final int ACTION = 3;
     private int peasantCount;              // number of peasants to operate on
 
     public DepositAction(int k) {
@@ -72,11 +71,16 @@ public class DepositAction implements StripsAction {
         return "DEPOSIT(k:" + peasantCount + ")";
     }
     
+    /**
+     * Determines if two deposit actions are equal based on their peasant counts.
+     * 
+     * @return true if the two deposit actions are equal
+     */
 	@Override
 	public boolean equals(Object o){
 		if (o != null && o instanceof DepositAction){
 			DepositAction a = (DepositAction)o;
-			return a.ACTION == this.ACTION && a.peasantCount == this.peasantCount;
+			return a.peasantCount == this.peasantCount;
 		}
 		return false;
 	}

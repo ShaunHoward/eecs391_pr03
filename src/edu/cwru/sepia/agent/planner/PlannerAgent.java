@@ -182,7 +182,7 @@ public class PlannerAgent extends Agent {
 			
             //Remove actions that are no longer useful to the state space search
 			if (current.peasants.size() >= goal.peasants.size() && actions.size() != 5 * current.peasants.size()){
-				removeCostlyActions(goal.peasants.size());
+				removeCostlyActions(current.peasants.size());
 			}
 
 			//Build the least cost path when the goal or depth is met
@@ -230,11 +230,7 @@ public class PlannerAgent extends Agent {
 							System.out.println("another place not hit ever");
 						}
 						open.add(neighbor);
-					} else {
-						
 					}
-				} else {
-					System.out.println("is this ever even hit?");
 				}
 			}
 		}
@@ -254,13 +250,14 @@ public class PlannerAgent extends Agent {
 		
 		//Remove actions that are no longer beneficial to the state search
 		for (StripsAction action : actionsCopy){
+			
 			if (action instanceof BuildPeasantAction){
 				actions.remove(action);
 				System.out.println("removing build peasant actions");
 			}
 			if (action instanceof MoveAction){
 				MoveAction mAction = (MoveAction)action;
-				if (mAction.getK() < numPeasants - 1){
+				if (mAction.getPeasantCount() < numPeasants - 1){
 					actions.remove(action);
 				}
 			}

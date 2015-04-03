@@ -18,18 +18,18 @@ public class MoveAction implements StripsAction {
         Makespan: distance between resource node and town hall
     **/
 
-	public static final int ACTION = 1;
     private int peasantCount;              // number of peasants to operate on
     public Integer originId,   // id of resource node or null for town hall
                     destId;     // use nullable Integer instead of int
     private int makeSpan;       // cost of executing the action
     private boolean toTownHall;
 
-    public MoveAction(int k, GameState s, Integer originId, Integer destId, boolean toTownhall) {
-        this.peasantCount = k;
+    public MoveAction(int peasantCount, GameState s, Integer originId, Integer destId, boolean toTownhall) {
+        this.peasantCount = peasantCount;
         this.originId = originId;
         this.destId = destId;
         this.toTownHall = toTownhall;
+        //set the makespan to the distance of this resource from the townhall
         makeSpan = s.getResourceWithId(destId == null ? originId : destId).getDistance();
     }
 
@@ -69,7 +69,7 @@ public class MoveAction implements StripsAction {
     	return this.toTownHall;
     }
 
-    public int getK() { return peasantCount; }
+    public int getPeasantCount() { return peasantCount; }
 
     public Integer getDestId() { return destId; }
 
@@ -92,11 +92,18 @@ public class MoveAction implements StripsAction {
         return "MOVE(k:" + peasantCount + ", from:" + originId + ", to:" + destId + ")";
     }
     
+    /**
+     * Determines whether two move actions are equal based on their origin ids, destination ids and peasant count.
+     * 
+     * @return true if the two move actions are equal
+     */
 	@Override
 	public boolean equals(Object o){
 		if (o != null && o instanceof MoveAction){
 			MoveAction a = (MoveAction)o;
-			return a.ACTION == this.ACTION && a.originId == this.originId && a.destId == this.destId && a.peasantCount == this.peasantCount;
+			return a.originId == this.originId &&
+					a.destId == this.destId &&
+					a.peasantCount == this.peasantCount;
 		}
 		return false;
 	}
