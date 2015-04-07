@@ -8,67 +8,52 @@ import java.util.List;
 
 /**
  * This class is used to represent the state of the game after applying one of
- * the avaiable actions. It will also track the A* specific information such as
- * the parent pointer and the cost and heuristic function. Remember that unlike
- * the path planning A* from the first assignment the cost of an action may be
+ * the available actions. It also tracks the A* specific information such as
+ * the parent action and state as well as the cost and heuristic functions. Unlike
+ * the path planning A* from the first assignment, the cost of an action may be
  * more than 1. Specifically the cost of executing a compound action such as
- * move can be more than 1. You will need to account for this in your heuristic
- * and your cost function.
+ * move can be more than 1. This is accounted for in the heuristic
+ * and the cost function.
  *
- * The first instance is constructed from the StateView object (like in PA2).
- * Implement the methods provided and add any other methods and member variables
- * you need.
- *
- * Some useful API calls for the state view are
- *
- * state.getXExtent() and state.getYExtent() to get the map size
- *
- * I recommend storing the actions that generated the instance of the GameState
- * in this class using whatever class/structure you use to represent actions.
+ * There are plan resources for each resource on the map and plan peasants for all
+ * the peasants on the map. Important data from the state view objects is tracked in these
+ * objects. The depth of the current state is also tracked for IDA* search purposes if
+ * the number of peasants grows very large. 
+ * 
+ * The desired amount of gold and wood at this state are also set upon construction.
+ * 
+ * @author Shaun Howard
  */
 public class GameState implements Comparable<GameState> {
 
+	//desired gold and wood for this state
 	public int gold, wood;
+	
+	//tracking objects for the resources and peasants on the map
+	//at the current step of the game
 	public List<PlanResource> resources;
 	public List<PlanPeasant> peasants;
+	
+	//the parent action that created this action
 	public StripsAction parentAction;
+	
+	//values set during A* search
 	private int depth = 0;
 	private int cost = 0;
 	private int totalCost = 0;
+	
+	//the parent state to this state
 	private GameState parent = null;
 
 	/**
-	 * Construct a GameState from a stateview object. This is used to construct
-	 * the initial search node. All other nodes should be constructed from the
-	 * another constructor you create or by factory functions that you create.
-	 *
-	 * @param state
-	 *            The current stateview at the time the plan is being created
-	 * @param playernum
-	 *            The player number of agent that is planning
+	 * Creates a brand new game state from the given amount of gold and wood, empty
+	 * of peasants or resources.
+	 * 
 	 * @param requiredGold
 	 *            The goal amount of gold (e.g. 200 for the small scenario)
 	 * @param requiredWood
 	 *            The goal amount of wood (e.g. 200 for the small scenario)
-	 * @param buildPeasants
-	 *            True if the BuildPeasant action should be considered
 	 */
-	public GameState(State.StateView state, GameState previous) {
-//		state.getResourceAmount(arg0, arg1)
-	}
-
-	public GameState(GameState parent, StripsAction action) {
-		this.depth = parent.depth + 1;
-		this.parentAction = action;
-	}
-
-	// public GameState(GameState orig){
-	// this.depth = orig.depth;
-	// this.parentAction = orig.parentAction;
-	// this.valuesFromParent = orig.valuesFromParent;
-	// this.state = orig.state;
-	// }
-
 	public GameState(int gold, int wood) {
 		this.gold = gold;
 		this.wood = wood;
@@ -76,21 +61,31 @@ public class GameState implements Comparable<GameState> {
 		peasants = new ArrayList<PlanPeasant>();
 	}
 
-	// constructor for cloning another PlanState
+	/**
+	 * Creates a game state deep clone from the given game state, which is now
+	 * this state's parent.
+	 * 
+	 * @param parent - the parent of this game state, i.e. the state to clone
+	 */
 	public GameState(GameState parent) {
 		this(parent.gold, parent.wood);
-		// clone each resource
+		
+		//Copy each resource to the new state
 		for (PlanResource resource : parent.resources) {
 			this.resources.add(new PlanResource(resource));
 		}
-		// clone each peasant and maintain reference to cloned resource if
-		// needed
+		
+		//Copy each peasant to the new state
 		for (PlanPeasant peasant : parent.peasants) {
 			PlanPeasant newPeasant = new PlanPeasant(peasant.getCargoAmount(), peasant.x, peasant.y, peasant.id);
 			newPeasant.setCargo(peasant.getCargo());
+			
+			//If we are next to something, it's a resource
 			PlanResource nextTo = peasant.getNextTo();
-			if (nextTo != null)
+			if (nextTo != null){
 				newPeasant.setNextTo(getResourceWithId(nextTo.getId()));
+			}
+			
 			peasants.add(newPeasant);
 		}
 		this.parent = parent;
@@ -108,7 +103,7 @@ public class GameState implements Comparable<GameState> {
 		this.depth = depth;
 	}
 
-	public StripsAction getFromParent() {
+	public StripsAction getParentAction() {
 		return this.parentAction;
 	}
 
@@ -117,11 +112,12 @@ public class GameState implements Comparable<GameState> {
 	}
 
 	/**
-	 * Unlike in the first A* assignment there are many possible goal states. As
-	 * long as the wood and gold requirements are met the peasants can be at any
-	 * location and the capacities of the resource locations can be anything.
-	 * Use this function to check if the goal conditions are met and return true
-	 * if they are.
+	 * Determines if this state is a goal state.
+	 * 
+	 * Goal states are determined by the amount of resources the peasants have 
+	 * gathered at that amount of time. As long as the wood and gold requirements
+	 * are met the peasants can be at any location and the capacities of the resource
+	 * locations can be anything.
 	 *
 	 * @return true if the goal conditions are met in this instance of game
 	 *         state.
@@ -131,9 +127,8 @@ public class GameState implements Comparable<GameState> {
 	}
 
 	/**
-	 * The branching factor of this search graph are much higher than the
-	 * planning. Generate all of the possible successor states and their
-	 * associated actions in this method.
+	 * Generates all of the possible successor states and their
+	 * associated actions in this method (via GameState object).
 	 *
 	 * @return A list of the possible successor states and their associated
 	 *         actions
@@ -142,8 +137,13 @@ public class GameState implements Comparable<GameState> {
 			List<StripsAction> actions) {
 		ArrayList<GameState> result = new ArrayList<GameState>();
 		
+		//check if each possible action meets the preconditions
+		//to reach the goal state
 		for (StripsAction a : actions) {
 			if (a.preconditionsMet(this, goal)) {
+				
+				//apply the action to this state in order to
+				//get one action closer to the goal state
 				result.add(a.apply(this));
 			}
 		}
@@ -152,42 +152,51 @@ public class GameState implements Comparable<GameState> {
 	}
 
 	/**
-	 * Write your heuristic function here. Remember this must be admissible for
-	 * the properties of A* to hold. If you can come up with an easy way of
-	 * computing a consistent heuristic that is even better, but not strictly
-	 * necessary.
+	 * A heuristic function for A* search in the resource collection game.
+	 * This should be admissible so the properties of A* hold.
 	 *
-	 * Add a description here in your submission explaining your heuristic.
+	 * The heuristic utilizes properties of this game state to determine the 
+	 * most probable distance to the desired goal state. Some values considered
+	 * are:
+	 * 
+	 * the number of peasants at the goal vs the number of peasants in this state
+	 * the number of cycles the peasants will take to gather gold
+	 * the number of cycles the peasants will take to gather wood
+	 * the number of steps needed to gather resources
+	 * the amount of wood gathered at the current state
 	 *
+	 * Altogether, considering these values provides a fairly accurate heuristic.
+	 * It considers when the game needs to build peasants, when the peasants
+	 * should choose one resource over another due to distance and cycles necessary
+	 * to gather the resources, and finally, the amount of wood at the current state 
+	 * helps the peasants find the goal state sooner since wood has less priority as 
+	 * gold and needs to be factored in the heuristic.
+	 * 
 	 * @return The value estimated remaining cost to reach a goal state from
 	 *         this state.
 	 */
 	public int heuristic(GameState destination) {
-		int score = 0;
+		int heuristic = 0;
 
-		// prioritize making peasants
-		score += (destination.peasants.size() - peasants.size()) * 100;
+		//Make peasants a priority
+		heuristic += (destination.peasants.size() - peasants.size()) * 100;
 
-		// estimate cycles needed to gather resources
-		int cyclesForGold = Math.max(destination.gold - gold, 0)
-				/ (peasants.size() * 100);
-		int cyclesForWood = Math.max(destination.wood - wood, 0)
-				/ (peasants.size() * 100);
-
-		// assume every resource is 30 steps away
-		score += (cyclesForGold + cyclesForWood) * 60;
+		//Determine the # of cycles needed to gather gold
+		int goldCycles = Math.max(0,destination.gold - gold)
+				/ (100 * peasants.size());
 		
-		score -= wood;
-		
-		//if (this.gold > destination.gold){
-		//	score -= this.wood;
-	//	} else {
-		//	score -= this.gold;
-		//}
-		// add weight for more deposited resources
-		//score += destination.gold + destination.wood;
+		//Determine the # of cycles needed to gather wood
+		int woodCycles = Math.max(0, destination.wood - wood)
+				/ (100 * peasants.size());
 
-		return score;
+		//Choose 30 steps to be the distance from a resource
+		heuristic += 60 * (goldCycles + woodCycles);
+		
+		//Factor in the amount of wood in order to find the goal state
+		//faster.
+		heuristic -= wood;
+
+		return heuristic;
 	}
 
 	int getPeasantCount() {
@@ -207,10 +216,11 @@ public class GameState implements Comparable<GameState> {
 	}
 
 	/**
-	 *
-	 * Write the function that computes the current cost to get to this node.
-	 * This is combined with your heuristic to determine which actions/states
-	 * are better to explore.
+	 * The cost of this game state is computed and set
+	 * in the A* search method.
+	 * 
+	 * This returns the current cost of this state as computed by
+	 * A*.
 	 *
 	 * @return The current cost to reach this goal
 	 */
@@ -218,28 +228,45 @@ public class GameState implements Comparable<GameState> {
 		return cost;
 	}
 
+	/**
+	 * Fetches the necessary plan resource with the given id
+	 * from the list of resources currently present in the state.
+	 * 
+	 * @param id - the id of the resource to get
+	 * @return the resource with the desired id
+	 */
 	public PlanResource getResourceWithId(int id) {
-		for (PlanResource resource : resources)
-			if (resource.getId() == id)
+		for (PlanResource resource : resources){
+			if (resource.getId() == id){
 				return resource;
+			}
+		}
+		
 		System.out.println("No resource with id " + id);
 		return null;
 	}
 
+	/**
+	 * Simply returns the amount of gold and wood at this state 
+	 * as well as the list of peasants and resources.
+	 * 
+	 * @return a string describing this state by gold, wood, peasants
+	 * and resources
+	 */
 	@Override
 	public String toString() {
-		String str = "G:" + gold + ", W:" + wood;
+		String output = "Gold:" + gold + ", Wood:" + wood;
 		if (peasants.size() > 0)
-			str += " P:" + peasants;
+			output += " Peas:" + peasants;
 		if (resources.size() > 0)
-			str += " R:" + resources;
-		return str;
+			output += " Res:" + resources;
+		return output;
 	}
 
 	/**
-	 * This is necessary to use your state in the Java priority queue. See the
-	 * official priority queue and Comparable interface documentation to learn
-	 * how this function should work.
+	 * Returns the comparison between this game state's total cost
+	 * and the given game state's total cost. This will return
+	 * the same values that Java's int compareTo function would.
 	 *
 	 * @param o
 	 *            The other game state to compare
@@ -248,8 +275,8 @@ public class GameState implements Comparable<GameState> {
 	 */
 	@Override
 	public int compareTo(GameState o) {
-		int thisValue = this.getTotalCost(); //- this.gold - this.wood * 20;
-		int thatValue = o.getTotalCost(); //- o.gold - o.wood * 20;
+		int thisValue = this.getTotalCost();
+		int thatValue = o.getTotalCost();
 		return (int) (thisValue - thatValue);
 	}
 
@@ -277,6 +304,7 @@ public class GameState implements Comparable<GameState> {
 					this.peasants.size() == s.peasants.size()){
 				
 				//make sure each peasant is equal between states
+				//the peasants should also be in the same order in both lists
 				for (int i = 0; i < peasants.size(); i++){
 					
 					//the peasants are not equal, so these states are not equal
@@ -296,17 +324,17 @@ public class GameState implements Comparable<GameState> {
 	}
 
 	/**
-	 * This is necessary to use the GameState as a key in a HashSet or HashMap.
-	 * Remember that if two objects are equal they should hash to the same
-	 * value.
+	 * A hash code function based on the amount of gold and wood in this state
+	 * as well as the number of peasants and the number of resources.
 	 *
-	 * @return An integer hashcode that is equal for equal states.
+	 * @return An integer hash code that is equal for equal states.
 	 */
 	@Override
 	public int hashCode() {
-		// int hash = (int) (31 * getCost());
 		int hash = 31 * gold;
 		hash = hash * (53 * wood);
+		hash = hash * peasants.size();
+		hash += hash * resources.size();
 		return hash;
 	}
 
