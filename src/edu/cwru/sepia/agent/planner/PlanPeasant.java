@@ -1,15 +1,40 @@
 package edu.cwru.sepia.agent.planner;
 import edu.cwru.sepia.environment.model.state.ResourceNode;
-import edu.cwru.sepia.environment.model.state.ResourceType;
 
+/**
+ * A class to track each peasant in the current resource collection game in SEPIA.
+ * 
+ * A peasant has a location in x,y coordinates, a unique id, a cargoAmount, cargo type, and
+ * may be next to a resource on the map.
+ * 
+ * @author Shaun Howard
+ */
 public class PlanPeasant {
 
-    private PlanResource nextTo;
+	//the resource this peasant may be next to
+    private PlanResource adjacentResource;
+    
+    //the type of cargo the peasant may be carrying
     private ResourceNode.Type cargoType;
+    
+    //the amount of cargo the peasant may be carrying
     private int cargoAmount = 0;
+    
+    //the position of the peasant on the game grid
     public int x, y;
+    
+    //the unique id of the peasant
     public int id;
 
+    /**
+     * Constructs a new plan peasant from the amount of cargo it should have,
+     * the position it should have in x and y, and the id it should have.
+     * 
+     * @param cargoAmount - the cargo amount desired to carry
+     * @param x - the x coordinate on the grid
+     * @param y - the y coordinate on the grid
+     * @param id - the unique id of this peasant
+     */
     public PlanPeasant(int cargoAmount, int x, int y, int id) {
     	this.cargoAmount = cargoAmount;
     	this.x = x;
@@ -24,9 +49,22 @@ public class PlanPeasant {
     public int getCargoAmount(){
     	return this.cargoAmount;
     }
-    public PlanResource getNextTo() { return nextTo; }
+    
+    /**
+     * Gets the resource this peasant is adjacent to, if one exists.
+     * 
+     * Will return null if one does not exist.
+     * 
+     * @return the resource adjacent to this peasant or null if there is not one
+     */
+    public PlanResource getAdjacentResource() { return adjacentResource; }
 
-    public void setNextTo(PlanResource nextTo) { this.nextTo = nextTo; }
+    /**
+     * Sets the resource next to this peasant. Set null if there is not adjacent resource.
+     *     
+     * @param adjRes - the resource next to this peasant or null if there isn't one
+     */
+    public void setAdjacentResource(PlanResource adjRes) { this.adjacentResource = adjRes; }
 
     public ResourceNode.Type getCargo() {
         return cargoType;
@@ -36,15 +74,27 @@ public class PlanPeasant {
         this.cargoType = cargo;
     }
 
+    /**
+     * Returns a string describing this peasant.
+     * The string outlines whether the peasant has an adjacent resource
+     * and its cargo type.
+     * @return the string describing this peasant
+     */
     @Override
     public String toString() {
-        String str = "(" + (nextTo == null ? "T" : nextTo.getId());
-        if(cargoType != null)
-            str += "," + (cargoType.equals(ResourceNode.Type.GOLD_MINE) ? "G" : "W");
-        str += ")";
-        return str;
+    	StringBuilder builder = new StringBuilder();
+        builder.append("(" + (adjacentResource == null ? "TH" : adjacentResource.getId()));
+        if(cargoType != null){
+            builder.append("," + (cargoType.equals(ResourceNode.Type.GOLD_MINE) ? "Gold" : "Wood"));
+        }
+        builder.append(")");
+        return builder.toString();
     }
     
+    /**
+     * Equals is based on the peasants coordinates and its cargo type and value.
+     * @return true if two peasants are eual
+     */
     @Override
     public boolean equals(Object o){
     	if (o == null || !(o instanceof PlanPeasant)){

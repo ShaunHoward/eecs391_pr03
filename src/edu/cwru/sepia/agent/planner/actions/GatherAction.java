@@ -78,8 +78,8 @@ public class GatherAction implements StripsAction {
 	}
 
 	private boolean isValid(PlanPeasant peasant) {
-		return peasant.getNextTo() != null
-				&& peasant.getNextTo().getId() == targetId
+		return peasant.getAdjacentResource() != null
+				&& peasant.getAdjacentResource().getId() == targetId
 				&& peasant.getCargo() == null;
 	}
 

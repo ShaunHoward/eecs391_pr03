@@ -80,9 +80,9 @@ public class GameState implements Comparable<GameState> {
 			newPeasant.setCargo(peasant.getCargo());
 			
 			//If we are next to something, it's a resource
-			PlanResource nextTo = peasant.getNextTo();
+			PlanResource nextTo = peasant.getAdjacentResource();
 			if (nextTo != null){
-				newPeasant.setNextTo(getResourceWithId(nextTo.getId()));
+				newPeasant.setAdjacentResource(getResourceWithId(nextTo.getId()));
 			}
 			
 			peasants.add(newPeasant);

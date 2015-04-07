@@ -162,14 +162,14 @@ public class PEAgent extends Agent {
 
 			// get the number of peasants that should be at the destination
 			for (PlanPeasant peasant : nextState.peasants) {
-				if (mAction.toTownHall() && peasant.getNextTo() == null
+				if (mAction.toTownHall() && peasant.getAdjacentResource() == null
 						&& peasant.getCargoAmount() > 0) {
 					i++;
 					currIds.add(peasant.id);
 					System.out.println("peasant moving to townhall: "
 							+ peasant.id);
 				}
-				if (!mAction.toTownHall() && peasant.getNextTo() != null) {
+				if (!mAction.toTownHall() && peasant.getAdjacentResource() != null) {
 					i++;
 					currIds.add(peasant.id);
 					System.out.println("added peasant to move: " + peasant.id);
@@ -387,171 +387,11 @@ public class PEAgent extends Agent {
 		return Math.abs(x1 - x2) + Math.abs(y1 - y2) <= 2;
 	}
 
-	// private Position getDepositPosition(UnitView peasant) {
-	// Position peasPos = new Position(peasant.getXPosition(),
-	// peasant.getYPosition());
-	// Position thPos = new Position(townhalls.get(0).getXPosition(),
-	// townhalls.get(0).getYPosition());
-	// List<Position> adjPos = thPos.getAdjacentPositions();
-	// Position depPos = new Position(0, 0);
-	// double minDist = Double.MAX_VALUE;
-	// for (Position adj : adjPos) {
-	// double dist = peasPos.euclideanDistance(adj);
-	// if (dist < minDist) {
-	// minDist = dist;
-	// depPos = adj;
-	// }
-	// }
-	// System.out.println("Deposit position is: " + depPos.toString());
-	// return depPos;
-	// }
-
-	// /**
-	// * Checks to see if the current action on the list has been completed. If
-	// * so, advances to the next action
-	// *
-	// * @param stateView
-	// * @param townhall
-	// * @return the current action, or the next action, if the current action
-	// has
-	// * been completed.
-	// */
-	// private GameState getNextAction(StateView stateView, UnitView townhall) {
-	// GameState state = plan.get(curState);
-	// PlanAction action = state.getFromParent();
-	// int peasantId = 0;
-	// int location = 0;
-	// UnitView peasant = null;
-	// ResourceView resource = null;
-	//
-	// switch (action.getName()) {
-	// case "Move1":
-	// peasantId = action.getConstants().get(0).getValue();
-	// location = action.getConstants().get(2).getValue();
-	// peasant = stateView.getUnit(peasantId);
-	// resource = findClosestResource(peasant, location, stateView);
-	// if (resource != null) {
-	// // If we have reached the destination, do the next action in the
-	// // list
-	// if (isAdjacent(peasant, resource)) {
-	// curState++;
-	// }
-	// } else {
-	// // If we have reached the destination, do the next action in the
-	// // list
-	// if (isAdjacent(peasant, townhall)) {
-	// curState++;
-	// }
-	// }
-	// break;
-	// case "Harvest1":
-	// peasantId = action.getConstants().get(0).getValue();
-	// peasant = stateView.getUnit(peasantId);
-	// if (peasant.getCargoAmount() > 0) {
-	// curState++;
-	// }
-	// break;
-	// case "Deposit1":
-	// peasantId = action.getConstants().get(0).getValue();
-	// peasant = stateView.getUnit(peasantId);
-	// if (peasant.getCargoAmount() == 0) {
-	// curState++;
-	// }
-	// break;
-	// }
-	// System.out.println("Get next action executed.");
-	//
-	// return curState == plan.size() ? null : plan.get(curState);
-	// }
-
+	
 	private boolean isAdjacent(UnitView peasant, UnitView unitView) {
 		return (Math.abs(peasant.getXPosition() - unitView.getXPosition()) <= 1 && Math
 				.abs(peasant.getYPosition() - unitView.getYPosition()) <= 1);
 	}
-
-	// private void printStateAction(GameState state) {
-	// System.out.print(state.getFromParent().getName() + " (");
-	//
-	// for (Value val : state.getFromParent().getConstants()) {
-	// System.out.print(val.getConstantAsString());
-	// if (state.getFromParent().getConstants().indexOf(val) != state
-	// .getFromParent().getConstants().size() - 1) {
-	// System.out.print(", ");
-	// }
-	// }
-	//
-	// System.out.println(")");
-	// }
-
-	// private ResourceView findClosestResource(UnitView peasant, int location,
-	// StateView currentState) {
-	// List<ResourceView> resources = null;
-	//
-	// if (location == Condition.TOWNHALL.getValue()) {
-	// return null;
-	// } else if (location == Condition.GOLDMINE.getValue()) {
-	// resources = currentState.getResourceNodes(Type.GOLD_MINE);
-	// } else if (location == Condition.FOREST.getValue()) {
-	// resources = currentState.getResourceNodes(Type.TREE);
-	// } else {
-	// System.out
-	// .println("Something went wrong when finding closest resource!");
-	// System.out.println("\tPeasant: " + peasant.getID() + ", location: "
-	// + location);
-	// }
-	//
-	// double shortestDist = Double.MAX_VALUE;
-	// ResourceView closestResource = null;
-	//
-	// for (ResourceView resource : resources) {
-	// int deltX = peasant.getXPosition() - resource.getXPosition();
-	// int deltY = peasant.getYPosition() - resource.getYPosition();
-	// double dist = Math.sqrt((deltX * deltX) + (deltY * deltY));
-	//
-	// if (dist < shortestDist) {
-	// shortestDist = dist;
-	// closestResource = resource;
-	// }
-	// }
-	//
-	// return closestResource;
-	// }
-
-	// /**
-	// * Primitive actions take a direction (e.g. NORTH, NORTHEAST, etc) This
-	// * converts the difference between the current position and the desired
-	// * position to a direction.
-	// *
-	// * @param xDiff
-	// * Integer equal to 1, 0 or -1
-	// * @param yDiff
-	// * Integer equal to 1, 0 or -1
-	// * @return A Direction instance (e.g. SOUTHWEST) or null in the case of
-	// * error
-	// */
-	// private Direction getNextDirection(int xDiff, int yDiff) {
-	// System.out.printf("xDiff: %d, yDiff %d", xDiff, yDiff);
-	// // figure out the direction the footman needs to move in
-	// if (xDiff == 1 && yDiff == 1) {
-	// return Direction.SOUTHEAST;
-	// } else if (xDiff == 1 && yDiff == 0) {
-	// return Direction.EAST;
-	// } else if (xDiff == 1 && yDiff == -1) {
-	// return Direction.NORTHEAST;
-	// } else if (xDiff == 0 && yDiff == 1) {
-	// return Direction.SOUTH;
-	// } else if (xDiff == 0 && yDiff == -1) {
-	// return Direction.NORTH;
-	// } else if (xDiff == -1 && yDiff == 1) {
-	// return Direction.SOUTHWEST;
-	// } else if (xDiff == -1 && yDiff == 0) {
-	// return Direction.WEST;
-	// } else if (xDiff == -1 && yDiff == -1) {
-	// return Direction.NORTHWEST;
-	// }
-	// System.err.println("Invalid path. Could not determine direction");
-	// return null;
-	// }
 
 	@Override
 	public void terminalStep(State.StateView stateView,

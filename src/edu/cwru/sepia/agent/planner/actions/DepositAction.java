@@ -58,7 +58,7 @@ public class DepositAction implements StripsAction {
 
     private boolean isValid(PlanPeasant peasant) {
     //	boolean isAdjacent = PEAgent.isAdjacent(peasant., y1, x2, y2)
-        return peasant.getNextTo() == null && peasant.getCargo() != null && peasant.getCargoAmount() > 0;
+        return peasant.getAdjacentResource() == null && peasant.getCargo() != null && peasant.getCargoAmount() > 0;
     }
 
     @Override

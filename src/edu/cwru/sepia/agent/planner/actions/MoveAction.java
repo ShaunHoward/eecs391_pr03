@@ -58,8 +58,8 @@ public class MoveAction implements StripsAction {
         for(PlanPeasant peasant: newState.peasants)
             if(isValid(peasant) && i++ < peasantCount) {
             	
-                if(destId == null) peasant.setNextTo(null);
-                else peasant.setNextTo(newState.getResourceWithId(destId));
+                if(destId == null) peasant.setAdjacentResource(null);
+                else peasant.setAdjacentResource(newState.getResourceWithId(destId));
             }
         newState.parentAction = this;
         return newState;
@@ -77,9 +77,9 @@ public class MoveAction implements StripsAction {
 
     private boolean isValid(PlanPeasant peasant) {
         if(destId == null)
-            return peasant.getNextTo() != null && peasant.getNextTo().getId() == originId && peasant.getCargo() != null && peasant.getCargoAmount() > 0;
+            return peasant.getAdjacentResource() != null && peasant.getAdjacentResource().getId() == originId && peasant.getCargo() != null && peasant.getCargoAmount() > 0;
         else
-            return peasant.getNextTo() == null && peasant.getCargo() == null;
+            return peasant.getAdjacentResource() == null && peasant.getCargo() == null;
     }
 
     @Override
