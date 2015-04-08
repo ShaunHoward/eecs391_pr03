@@ -1,7 +1,7 @@
 package edu.cwru.sepia.agent.planner.actions;
 
-import edu.cwru.sepia.agent.planner.PlanPeasant;
-import edu.cwru.sepia.agent.planner.PlanResource;
+import edu.cwru.sepia.agent.planner.Peasant;
+import edu.cwru.sepia.agent.planner.Resource;
 import edu.cwru.sepia.agent.planner.GameState;
 
 public class GatherAction implements StripsAction {
@@ -29,7 +29,7 @@ public class GatherAction implements StripsAction {
 		int i = 0;
 		if (peasantCount <= s.peasants.size()
 				&& s.getResourceWithId(targetId).getAmount() >= peasantCount*100) {
-			for (PlanPeasant peasant : s.peasants) {
+			for (Peasant peasant : s.peasants) {
 				if (isValid(peasant) && ++i == peasantCount){
 					return true;
 				}
@@ -42,8 +42,8 @@ public class GatherAction implements StripsAction {
 	public GameState apply(GameState s) {
 		int i = 0;
 		GameState newState = new GameState(s);
-		PlanResource res = newState.getResourceWithId(targetId);
-		for (PlanPeasant peasant : newState.peasants) {
+		Resource res = newState.getResourceWithId(targetId);
+		for (Peasant peasant : newState.peasants) {
 			if (isValid(peasant) 
 					&& i++ < peasantCount
 					&& res.getAmount() >= 100) {
@@ -77,7 +77,7 @@ public class GatherAction implements StripsAction {
 		return resY;
 	}
 
-	private boolean isValid(PlanPeasant peasant) {
+	private boolean isValid(Peasant peasant) {
 		return peasant.getAdjacentResource() != null
 				&& peasant.getAdjacentResource().getId() == targetId
 				&& peasant.getCargo() == null;

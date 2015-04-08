@@ -2,7 +2,7 @@ package edu.cwru.sepia.agent.planner.actions;
 
 import edu.cwru.sepia.agent.planner.GameState;
 import edu.cwru.sepia.agent.planner.PEAgent;
-import edu.cwru.sepia.agent.planner.PlanPeasant;
+import edu.cwru.sepia.agent.planner.Peasant;
 import edu.cwru.sepia.environment.model.state.ResourceNode;
 
 public class DepositAction implements StripsAction {
@@ -24,7 +24,7 @@ public class DepositAction implements StripsAction {
     public boolean preconditionsMet(GameState s, GameState goal) {
         int i = 0;
         if(s.peasants.size() >= peasantCount) {
-            for(PlanPeasant peasant: s.peasants) {
+            for(Peasant peasant: s.peasants) {
                 if(isValid(peasant) && ++i == peasantCount){
                 	return true;
                 }
@@ -38,7 +38,7 @@ public class DepositAction implements StripsAction {
         int i = 0;
         GameState newState = new GameState(s);
         
-        for(PlanPeasant peasant: newState.peasants) {
+        for(Peasant peasant: newState.peasants) {
             if(isValid(peasant) && i++ < peasantCount) {
                 if(peasant.getCargo().equals(ResourceNode.Type.GOLD_MINE)) {
                 	newState.gold += 100;
@@ -56,7 +56,7 @@ public class DepositAction implements StripsAction {
 
     public int getPeasantCount() { return peasantCount; }
 
-    private boolean isValid(PlanPeasant peasant) {
+    private boolean isValid(Peasant peasant) {
     //	boolean isAdjacent = PEAgent.isAdjacent(peasant., y1, x2, y2)
         return peasant.getAdjacentResource() == null && peasant.getCargo() != null && peasant.getCargoAmount() > 0;
     }

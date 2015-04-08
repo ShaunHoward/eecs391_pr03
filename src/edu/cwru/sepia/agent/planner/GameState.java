@@ -30,8 +30,8 @@ public class GameState implements Comparable<GameState> {
 	
 	//tracking objects for the resources and peasants on the map
 	//at the current step of the game
-	public List<PlanResource> resources;
-	public List<PlanPeasant> peasants;
+	public List<Resource> resources;
+	public List<Peasant> peasants;
 	
 	//the parent action that created this action
 	public StripsAction parentAction;
@@ -56,8 +56,8 @@ public class GameState implements Comparable<GameState> {
 	public GameState(int gold, int wood) {
 		this.gold = gold;
 		this.wood = wood;
-		resources = new ArrayList<PlanResource>();
-		peasants = new ArrayList<PlanPeasant>();
+		resources = new ArrayList<Resource>();
+		peasants = new ArrayList<Peasant>();
 	}
 
 	/**
@@ -70,17 +70,17 @@ public class GameState implements Comparable<GameState> {
 		this(parent.gold, parent.wood);
 		
 		//Copy each resource to the new state
-		for (PlanResource resource : parent.resources) {
-			this.resources.add(new PlanResource(resource));
+		for (Resource resource : parent.resources) {
+			this.resources.add(new Resource(resource));
 		}
 		
 		//Copy each peasant to the new state
-		for (PlanPeasant peasant : parent.peasants) {
-			PlanPeasant newPeasant = new PlanPeasant(peasant.getCargoAmount(), peasant.x, peasant.y, peasant.id);
+		for (Peasant peasant : parent.peasants) {
+			Peasant newPeasant = new Peasant(peasant.getCargoAmount(), peasant.x, peasant.y, peasant.id);
 			newPeasant.setCargo(peasant.getCargo());
 			
 			//If we are next to something, it's a resource
-			PlanResource nextTo = peasant.getAdjacentResource();
+			Resource nextTo = peasant.getAdjacentResource();
 			if (nextTo != null){
 				newPeasant.setAdjacentResource(getResourceWithId(nextTo.getId()));
 			}
@@ -234,8 +234,8 @@ public class GameState implements Comparable<GameState> {
 	 * @param id - the id of the resource to get
 	 * @return the resource with the desired id
 	 */
-	public PlanResource getResourceWithId(int id) {
-		for (PlanResource resource : resources){
+	public Resource getResourceWithId(int id) {
+		for (Resource resource : resources){
 			if (resource.getId() == id){
 				return resource;
 			}
