@@ -7,7 +7,7 @@ import edu.cwru.sepia.environment.model.state.ResourceNode;
  * A peasant has a location in x,y coordinates, a unique id, a cargoAmount, cargo type, and
  * may be next to a resource on the map.
  * 
- * @author Shaun Howard
+ * @author Shaun Howard, Matthew Swartwout
  */
 public class Peasant {
 
