@@ -18,7 +18,7 @@ import edu.cwru.sepia.environment.model.state.ResourceNode;
  * The make span for this move is the distance from the origin 
  * and the destination.
  * 
- * @author Shaun Howard
+ * @author Shaun Howard, Matt Swartwout
  */
 public class MoveAction implements StripsAction {
 

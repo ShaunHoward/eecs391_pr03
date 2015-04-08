@@ -8,7 +8,7 @@ import edu.cwru.sepia.agent.planner.GameState;
  * Applies this action to the given game state.
  * Has an associated make span which depends on the actual time sepia needs to apply action.
  * 
- * @author Shaun Howard
+ * @author Shaun Howard, Matt Swartwout
  */
 public interface StripsAction {
 

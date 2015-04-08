@@ -15,7 +15,7 @@ import edu.cwru.sepia.environment.model.state.ResourceNode;
  * 
  * The make span is simply 1 for this action.
  * 
- * @author Shaun Howard
+ * @author Shaun Howard, Matt Swartwout
  *
  */
 public class DepositAction implements StripsAction {

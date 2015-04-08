@@ -18,7 +18,7 @@ import edu.cwru.sepia.agent.planner.GameState;
  * 
  * The make span for this action is 1.
  * 
- * @author Shaun Howard
+ * @author Shaun Howard, Matt Swartwout
  */
 public class HarvestAction implements StripsAction {
 

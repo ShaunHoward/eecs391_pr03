@@ -17,7 +17,7 @@ import edu.cwru.sepia.agent.planner.Resource;
  * 
  * The make span of this action is 1.
  * 
- * @author Shaun Howard
+ * @author Shaun Howard, Matt Swartwout
  */
 public class BuildPeasantAction implements StripsAction {
 

@@ -21,7 +21,7 @@ import java.util.List;
  * 
  * The desired amount of gold and wood at this state are also set upon construction.
  * 
- * @author Shaun Howard
+ * @author Shaun Howard, Matt Swartwout
  */
 public class GameState implements Comparable<GameState> {
 
