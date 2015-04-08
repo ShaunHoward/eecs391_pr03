@@ -83,7 +83,7 @@ public class Peasant {
     @Override
     public String toString() {
     	StringBuilder builder = new StringBuilder();
-        builder.append("(" + (adjacentResource == null ? "TH" : adjacentResource.getId()));
+        builder.append("(" + (adjacentResource == null ? "TownHall" : adjacentResource.getId()));
         if(cargoType != null){
             builder.append("," + (cargoType.equals(ResourceNode.Type.GOLD_MINE) ? "Gold" : "Wood"));
         }

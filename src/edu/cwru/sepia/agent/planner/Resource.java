@@ -72,11 +72,12 @@ public class Resource {
      * @return the amount gathered (100 or 0)
      */
     public int gather() {
+    	int amt = 0;
         if(this.amount >= 100) {
-            this.amount -= 100;
-            return 100;
+        	amt = 100;
+            this.amount -= amt;
         }
-        return 0;
+        return amt;
     }
 
     public int getId() { return id; }

@@ -41,23 +41,23 @@ public class MoveAction implements StripsAction {
      * will move to the town hall.
      * 
      * @param peasantCount - the number of peasants in this move
-     * @param s - the current game state to apply the move to
-     * @param originId - the origin position of the move
-     * @param destId - the destination position of the move
+     * @param state - the current game state to apply the move to
+     * @param startId - the origin position of the move
+     * @param finishId - the destination position of the move
      * @param toTownhall - whether this move goes to a town hall
      */
-    public MoveAction(int peasantCount, GameState s, Integer originId, Integer destId, boolean toTownhall) {
+    public MoveAction(int peasantCount, GameState state, Integer startId, Integer finishId, boolean toTownhall) {
         this.peasantCount = peasantCount;
-        this.startId = originId;
-        this.finishId = destId;
+        this.startId = startId;
+        this.finishId = finishId;
         this.toTownHall = toTownhall;
         //set the makespan to the distance of this resource from the townhall
-        makeSpan = s.getResourceWithId(destId == null ? originId : destId).getDistance();
+        makeSpan = state.getResourceWithId(finishId == null ? startId : finishId).getDistance();
     }
 
     @Override
     public boolean preconditionsMet(GameState s, GameState goal) {
-        int i = 0;
+        int currNumPeas = 0;
         
         //Disallow moves to empty resource nodes
         if(finishId != null) { 
@@ -74,7 +74,7 @@ public class MoveAction implements StripsAction {
         //see if there are enough peasants present
         if(s.peasants.size() >= peasantCount) {
             for(Peasant peasant: s.peasants)
-                if(isValid(peasant) && ++i == peasantCount) return true;
+                if(isValid(peasant) && ++currNumPeas == peasantCount) return true;
         }
         
         return false;
@@ -149,9 +149,9 @@ public class MoveAction implements StripsAction {
     public String toString() {
     	String townhall = "town hall";
     	if (startId == null){
-    		return "MOVE(peasCount:" + peasantCount + ", from:" + townhall + ", to:" + finishId + ")";
+    		return "MOVE(peasant count: " + peasantCount + ", from: " + townhall + ", to resource with id: " + finishId + ")";
     	} else {
-    		return "MOVE(peasCount:" + peasantCount + ", from:" + startId + ", to:" + townhall + ")";
+    		return "MOVE(peasant count: " + peasantCount + ", from resource with id: " + startId + ", to: " + townhall + ")";
     	}    
     }
     

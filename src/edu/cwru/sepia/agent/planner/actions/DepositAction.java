@@ -43,11 +43,11 @@ public class DepositAction implements StripsAction {
      */
     @Override
     public boolean preconditionsMet(GameState s, GameState goal) {
-        int i = 0;
+        int currNumPeas = 0;
         if(s.peasants.size() >= peasantCount) {
             for(Peasant peasant: s.peasants) {
             	//check if peasants are valid and that we have enough
-                if(isValid(peasant) && ++i == peasantCount){
+                if(isValid(peasant) && ++currNumPeas == peasantCount){
                 	return true;
                 }
             }
@@ -115,7 +115,7 @@ public class DepositAction implements StripsAction {
      */
     @Override
     public String toString() {
-        return "DEPOSIT(peasCount: " + peasantCount + ")";
+        return "DEPOSIT(peasant count: " + peasantCount + ")";
     }
     
 

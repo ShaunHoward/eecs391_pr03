@@ -122,7 +122,7 @@ public class PEAgent extends Agent {
 					.getOriginId() == null ? moveAction.getDestId() : moveAction
 					.getOriginId());
 			boolean done = false;
-			int i = 0, j = 0;
+			int peasAtDest = 0, peasAdjToDest = 0;
 			int originX, originY, destX, destY;
 
 			//Have to set destination id to resources, unless we are traveling
@@ -143,18 +143,18 @@ public class PEAgent extends Agent {
 			for (Peasant peasant : nextState.peasants) {
 				if (moveAction.toTownHall() && peasant.getAdjacentResource() == null
 						&& peasant.getCargoAmount() > 0) {
-					i++;
+					peasAtDest++;
 					currIds.add(peasant.id);
 				}
 				if (!moveAction.toTownHall() && peasant.getAdjacentResource() != null) {
-					i++;
+					peasAtDest++;
 					currIds.add(peasant.id);
 				}
 			}
 			
 			//alter the move to be for less peasants if necessary
-			if (moveAction.getPeasantCount() < i) {
-				i = moveAction.getPeasantCount();
+			if (moveAction.getPeasantCount() < peasAtDest) {
+				peasAtDest = moveAction.getPeasantCount();
 			}
 
 			//Determine if the right number of peasants are at the destination
@@ -165,7 +165,7 @@ public class PEAgent extends Agent {
 				if (isAdjacent(peasant.getXPosition(), peasant.getYPosition(),
 						destX, destY)
 						&& peasants.contains(peasant.getID())
-						&& ++j == i) {
+						&& ++peasAdjToDest == peasAtDest) {
 					done = true;
 				}
 			}

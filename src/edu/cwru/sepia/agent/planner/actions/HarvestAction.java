@@ -13,7 +13,7 @@ import edu.cwru.sepia.agent.planner.GameState;
  * carrying any cargo yet.
  * 
  * The effects for this action are that the resource will have (100 * number 
- * of peasants) less parts, and the peasants that gathered will have 100 of the
+ * of peasants) less value, and the peasants that gathered will have 100 of the
  * resource each.
  * 
  * The make span for this action is 1.
@@ -38,16 +38,16 @@ public class HarvestAction implements StripsAction {
 	 * Construct a gather action from the specified number of peasants, the designated target id, 
 	 * the x and y coordinates of the destination.
 	 * 
-	 * @param k - the number of peasants to operate on
+	 * @param peasantCount - the number of peasants to operate on
  	 * @param targetId - the id of the target resource
-	 * @param x - the x coordinate of the target
-	 * @param y - the y coordinate of the target
+	 * @param resX - the x coordinate of the target
+	 * @param resY - the y coordinate of the target
 	 */
-	public HarvestAction(int k, Integer targetId, int x, int y) {
-		this.peasantCount = k;
+	public HarvestAction(int peasantCount, Integer targetId, int resX, int resY) {
+		this.peasantCount = peasantCount;
 		this.targetResourceId = targetId;
-		this.resX = x;
-		this.resY = y;
+		this.resX = resX;
+		this.resY = resY;
 	}
 
 	/**
@@ -59,7 +59,7 @@ public class HarvestAction implements StripsAction {
 	 */
 	@Override
 	public boolean preconditionsMet(GameState s, GameState goal) {
-		int i = 0;
+		int currNumPeas = 0;
 		
 		//Make sure there are enough resources to gather and up to the
 		//number of peasants for this action available to gather.
@@ -68,7 +68,7 @@ public class HarvestAction implements StripsAction {
 			for (Peasant peasant : s.peasants) {
 				//check that the peasants are valid for this action
 				//and that there are enough
-				if (isValid(peasant) && ++i == peasantCount){
+				if (isValid(peasant) && ++currNumPeas == peasantCount){
 					return true;
 				}
 			}
@@ -146,7 +146,7 @@ public class HarvestAction implements StripsAction {
 	 */
 	@Override
 	public String toString() {
-		return "HARVEST(peasCount: " + peasantCount + ", target id:" + targetResourceId + ")";
+		return "HARVEST(peasant count: " + peasantCount + ", resource id: " + targetResourceId + ")";
 	}
 	
 	public int getPeasantCount() {

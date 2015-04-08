@@ -5,8 +5,7 @@ import edu.cwru.sepia.agent.planner.Peasant;
 import edu.cwru.sepia.agent.planner.Resource;
 
 /**
- * Builds a peasant action for use in the resource collection game
- * of PS3 in EECS 391.
+ * Builds a peasant action for use in the resource collection game in SEPIA.
  * 
  * This action has certain preconditions that must be met
  * in order to be made. These conditions are that there are fewer than 3 peasants
@@ -14,7 +13,9 @@ import edu.cwru.sepia.agent.planner.Resource;
  * have at least 400 gold collected.
  * 
  * The effects are that there is one more peasant added to the game and
- * the peasants now have 400 less gold. The make span of this action is 1.
+ * the peasants now have 400 less gold.
+ * 
+ * The make span of this action is 1.
  * 
  * @author Shaun Howard
  */
