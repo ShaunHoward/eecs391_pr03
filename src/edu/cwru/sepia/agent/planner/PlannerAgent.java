@@ -428,7 +428,7 @@ public class PlannerAgent extends Agent {
 	public void terminalStep(State.StateView stateView,
 			History.HistoryView historyView) {
 		long totalTime = System.nanoTime() - startTime;
-		System.out.println("Total time was " +totalTime/1e9);
+		System.out.println("Total time to execute plan was: " +totalTime/1e9);
 	}
 
 	@Override
