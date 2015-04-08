@@ -7,7 +7,7 @@ import edu.cwru.sepia.util.DistanceMetrics;
  * A resource represents a resource view in the sepia game engine for the
  * resource collection game.
  * 
- * @author Shaun Howard
+ * @author Shaun Howard, Matthew Swartwout
  */
 public class Resource {
 
