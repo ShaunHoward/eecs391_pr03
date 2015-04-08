@@ -3,9 +3,12 @@ package edu.cwru.sepia.agent.planner.actions;
 import edu.cwru.sepia.agent.planner.GameState;
 
 /**
- * A useful start of an interface representing strips actions. You may add new methods to this interface if needed, but
- * you should implement the ones provided. You may also find it useful to specify a method that returns the effects
- * of a StripsAction.
+ * An interface representing a STRIPS-line action.
+ * Checks if the action meets the preconditions to reach the goal state given the current state.
+ * Applies this action to the given game state.
+ * Has an associated make span which depends on the actual time sepia needs to apply action.
+ * 
+ * @author Shaun Howard
  */
 public interface StripsAction {
 

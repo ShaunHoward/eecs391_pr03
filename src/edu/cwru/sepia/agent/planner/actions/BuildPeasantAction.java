@@ -20,6 +20,9 @@ import edu.cwru.sepia.agent.planner.Resource;
  */
 public class BuildPeasantAction implements StripsAction {
 
+	//the id for the new peasant
+	int id = 0;
+	
 	/**
 	 * Checks if the preconditions to build a peasant are met. 
 	 * Returns true if they are met.
@@ -30,7 +33,7 @@ public class BuildPeasantAction implements StripsAction {
 	 */
     @Override
     public boolean preconditionsMet(GameState currState, GameState goalState) {
-        return currState.gold >= 400 && currState.peasants.size() < 3;
+        return currState.peasants.size() < 3 && currState.gold >= 400;
     }
 
     /**
@@ -63,6 +66,8 @@ public class BuildPeasantAction implements StripsAction {
     	//Get the next available id
     	nextID++;
     	
+    	id = nextID;
+    	
     	//create a new peasant with that id
         newState.peasants.add(new Peasant(0, 0, 0, nextID));
         
@@ -89,6 +94,6 @@ public class BuildPeasantAction implements StripsAction {
      */
     @Override
     public String toString() {
-        return "BUILD_PEASANT()";
+        return "BUILD_PEASANT(peasant id: " + id + ")";
     }
 }

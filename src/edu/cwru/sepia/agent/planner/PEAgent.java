@@ -24,10 +24,15 @@ import java.util.Stack;
  */
 public class PEAgent extends Agent {
 
-	private Stack<GameState> plan; // list of planned actions
+	private static final long serialVersionUID = -1895318461218130264L;
+	
+	//the strips action plan of states to execute in the game
+	private Stack<GameState> plan;
+	
+	//id of the town hall on the map
 	private int townHallID;
 
-	// the list of ids currently in the game
+	//list of ids currently in the game
 	private List<Integer> currIds = new ArrayList<>();
 
 	// Whether a compound action is still executing in the current game state
@@ -42,16 +47,15 @@ public class PEAgent extends Agent {
 	public Map<Integer, Action> initialStep(State.StateView stateView,
 			History.HistoryView historyView) {
 
-		// identify units and create minimal data structures needed for planning
+		//Determine the unit of the town hall and get its id.
 		for (int id : stateView.getUnitIds(playernum)) {
 			Unit.UnitView unit = stateView.getUnit(id);
 			String typeName = unit.getTemplateView().getName();
-			if (typeName.equals("TownHall"))
+			if (typeName.equals("TownHall")){
 				townHallID = id;
+			}
 		}
-
-		System.out.println("Executing plan:");
-
+		
 		return middleStep(stateView, historyView);
 	}
 
@@ -81,13 +85,9 @@ public class PEAgent extends Agent {
 
 		// Find the next game state from the action plan
 		GameState nextState = plan.peek();
-		System.out.println("current gold is: " + nextState.gold);
-		System.out.println("current wood is: " + nextState.wood);
 		
 		//Get the parent action of the next game state
-		StripsAction pAction = nextState.parentAction;
-
-		System.out.println("Current action is: " + pAction.toString());
+		StripsAction pAction = nextState.parentAction;;
 
 		//Create a map of ids and actions to enact in the game
 		return createSepiaActions(nextState, pAction, stateView);
@@ -133,14 +133,11 @@ public class PEAgent extends Agent {
 				originY = resource.getY();
 				destX = townHallUnit.getXPosition();
 				destY = townHallUnit.getYPosition();
-				System.out.println("Moving to deposit at townhall");
 			} else {
 				originX = townHallUnit.getXPosition();
 				originY = townHallUnit.getYPosition();
 				destX = resource.getX();
 				destY = resource.getY();
-				System.out.println("Moving to gather resource at " + destX
-						+ ", " + destY);
 			}
 
 			//Find the number of peasants that should be at the destination
@@ -149,34 +146,21 @@ public class PEAgent extends Agent {
 						&& peasant.getCargoAmount() > 0) {
 					i++;
 					currIds.add(peasant.id);
-					System.out.println("peasant moving to townhall: "
-							+ peasant.id);
 				}
 				if (!moveAction.toTownHall() && peasant.getAdjacentResource() != null) {
 					i++;
 					currIds.add(peasant.id);
-					System.out.println("added peasant to move: " + peasant.id);
 				}
 			}
+			
+			//alter the move to be for less peasants if necessary
 			if (moveAction.getPeasantCount() < i) {
 				i = moveAction.getPeasantCount();
 			}
 
 			//Determine if the right number of peasants are at the destination
 			for (int id : peasants) {
-				System.out
-						.println("Checking to see if the right number of peasants are at dest");
 				Unit.UnitView peasant = stateView.getUnit(id);
-				
-				if (isAdjacent(peasant.getXPosition(), peasant.getYPosition(),
-						destX, destY)) {
-					System.out.println("peasant is at resource: "
-							+ peasant.getID());
-				} else {
-					System.out.println("peasant x and y: "
-							+ peasant.getXPosition() + ", "
-							+ peasant.getYPosition());
-				}
 
 				//Are peasants adjacent to destination when they should be?
 				if (isAdjacent(peasant.getXPosition(), peasant.getYPosition(),
@@ -184,7 +168,6 @@ public class PEAgent extends Agent {
 						&& peasants.contains(peasant.getID())
 						&& ++j == i) {
 					done = true;
-					System.out.println("We are done moving!");
 				}
 			}
 
@@ -192,7 +175,6 @@ public class PEAgent extends Agent {
 			//Can be done when the desired resource is all gathered
 			if (done || (!moveAction.toTownHall()
 					&& stateView.resourceAt(destX, destY) == null)) {
-				System.out.println("removing move action from stack");
 				plan.pop();
 				isBusy = false;
 				currIds.clear();
@@ -214,9 +196,6 @@ public class PEAgent extends Agent {
 						//create move action for this peasant to the destination
 						actions.put(id,
 								Action.createCompoundMove(id, destX, destY));
-						
-						System.out.println("Added move action: "
-								+ actions.get(id).toString());
 					}
 				}
 			}
@@ -224,17 +203,14 @@ public class PEAgent extends Agent {
 
 		//Make a new SEPIA gather action for the given number of peasants and 
 		//of the desired resource.
-		if (action instanceof GatherAction) {
-			System.out.println("Got to gather action");
-			GatherAction gatherAction = (GatherAction) action;
+		if (action instanceof HarvestAction) {
+			HarvestAction gatherAction = (HarvestAction) action;
 
 			boolean done = false;
 			int currPeas = 0;
 
 			//Determine if each peasant at the target is carrying cargo
 			for (int id : peasants) {
-				System.out.println("current peasant id for gather action: "
-						+ id);
 				Unit.UnitView peasant = stateView.getUnit(id);
 				
 				//When the desired peasants have gathered cargo we are done.
@@ -250,39 +226,25 @@ public class PEAgent extends Agent {
 			//then we are also done.
 			if (stateView.resourceAt(gatherAction.getResourceX(),
 					gatherAction.getResourceY()) == null) {
-				System.out.println("resource does not exist");
 				done = true;
 			}
 
 			//Remove this action from plan
 			if (done) {
-				System.out.println("done with gather action");
 				plan.pop();
-				System.out.println("Stack size is now: " + plan.size());
 				isBusy = false;
 				currIds.clear();
 			} else if (!isBusy) {
 				
 				int peasAssigned = 0;
-				System.out.println("going to gather peasants");
 				
 				//Command peasants to gather the desired resource
 				for (int id : peasants) {
-					System.out.println("current peasant id for gather action: "
-							+ id);
 					Unit.UnitView peasant = stateView.getUnit(id);
-					System.out.println("Peasant cargo amount: "
-							+ peasant.getCargoAmount());
 
 					//Determine if we can get cargo with this peasant
 					if (peasant.getCargoAmount() <= 0
 							&& peasAssigned++ < gatherAction.getPeasantCount()) {
-
-						System.out.println("peasant has no actions or cargo: "
-								+ peasant.getID());
-						System.out.println("Peasant x and y: "
-								+ peasant.getXPosition() + ", "
-								+ peasant.getYPosition());
 						
 						//Is this peasant adjacent to the resource?
 						if (isAdjacent(peasant.getXPosition(),
@@ -294,8 +256,6 @@ public class PEAgent extends Agent {
 									stateView.resourceAt(
 											gatherAction.getResourceX(),
 											gatherAction.getResourceY())));
-							System.out.println("Added gather action: "
-									+ actions.get(id).toString());
 						}
 						isBusy = true;
 					} else { //otherwise we are not busy anymore
@@ -321,22 +281,19 @@ public class PEAgent extends Agent {
 				if (peasant.getCargoType() == null
 						&& peasant.getCargoAmount() == 0) {
 					currPeas++;
-					System.out.println(peasant.getCargoAmount() + ", "
-							+ peasant.getCargoType());
 				}
 			}
 			
 			//Check if we have met action requirements
-			if (currPeas >= depositAction.getPeasantCount() && currPeas == peasants.size()) {
+			if (currPeas >= depositAction.getPeasantCount() &&
+					currPeas == peasants.size()) {
 				done = true;
 			}
 
 			//Determine if the correct amount of resources have been gathered
 			//Then we can remove this action
-			if ((stateView.getResourceAmount(playernum, ResourceType.GOLD) == nextState.gold && stateView
-					.getResourceAmount(playernum, ResourceType.WOOD) == nextState.wood)
-					|| done) {
-				System.out.println("Done with deposit action");
+			if (done || (stateView.getResourceAmount(playernum, ResourceType.GOLD) == nextState.gold && stateView
+					.getResourceAmount(playernum, ResourceType.WOOD) == nextState.wood)) {
 				plan.pop();
 				isBusy = false;
 				currIds.clear();
@@ -347,14 +304,6 @@ public class PEAgent extends Agent {
 				//Command peasants at the town hall to deposit resources
 				for (int id : peasants) {
 					Unit.UnitView peasant = stateView.getUnit(id);
-					
-					System.out.println("No current action for peasant id: "
-							+ peasant.getID());
-					System.out.println("Peasant has: "
-							+ peasant.getCargoAmount());
-
-					System.out.println("Making deposit action for id: "
-							+ id);
 
 					//Create a deposit action for this peasant
 					actions.put(id,

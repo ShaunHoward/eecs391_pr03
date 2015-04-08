@@ -4,7 +4,7 @@ import edu.cwru.sepia.action.Action;
 import edu.cwru.sepia.agent.Agent;
 import edu.cwru.sepia.agent.planner.actions.BuildPeasantAction;
 import edu.cwru.sepia.agent.planner.actions.DepositAction;
-import edu.cwru.sepia.agent.planner.actions.GatherAction;
+import edu.cwru.sepia.agent.planner.actions.HarvestAction;
 import edu.cwru.sepia.agent.planner.actions.MoveAction;
 import edu.cwru.sepia.agent.planner.actions.StripsAction;
 import edu.cwru.sepia.environment.model.history.History;
@@ -109,8 +109,9 @@ public class PlannerAgent extends Agent {
 		GameState goal = new GameState(requiredGold, requiredWood);
 		
 		//We find the best number of peasants to add to our mock game state
-		for (int i = 0; i < getMaxPeasants(); i++)
+		for (int i = 0; i < getMaxPeasants(); i++){
 			goal.peasants.add(new Peasant(0, 0, 0, 0));
+		}
 		
 		//Track the goal globally
 		goalState = goal;
@@ -157,11 +158,6 @@ public class PlannerAgent extends Agent {
 	 */
 	public static Stack<GameState> AstarSearch(GameState initial, GameState goal, int maxDepth) {
 
-		System.out.println("Planner initialized for:\n" + "\tInitial: "
-				+ initial + "\n" + "\tGoal: " + goal);
-
-		System.out.println("Search depth will be limited to: " + maxDepth);
-
 		//Adds generic actions to the action list
 		addBaseActions(initial, goal.peasants.size());
 
@@ -177,8 +173,9 @@ public class PlannerAgent extends Agent {
 		while (!open.isEmpty()) {
 
 			GameState current = open.poll();
+			
+			//check to skip this action if it has been done
 			if (closed.contains(current)) {
-				System.out.println("closed contains the current");
 				continue;
 			}
 					
@@ -189,7 +186,6 @@ public class PlannerAgent extends Agent {
 
 			//Build the least cost path when the goal or depth is met
 			if (current.isGoal(goal) || current.getDepth() >= maxDepth) {
-				System.out.println("Plan complete");
 				Stack<GameState> aStarPath = buildPath(current);
 				return aStarPath;
 			}
@@ -197,16 +193,12 @@ public class PlannerAgent extends Agent {
 			//The expanded state is now in the closed set
 			closed.add(current);
 
-			System.out.println("Expanding " + current.getCost() + ": "
-					+ current);
-
 			//Generate the children of this game state to evaluate all possible next actions
 			for (GameState neighbor : current.generateChildren(goal, actions)) {
 
 				//set up neighbor node from the current node
 				neighbor.setParent(current);
 				neighbor.setDepth(current.getDepth() + 1);
-				System.out.println("Current depth is: " + neighbor.getDepth());
 
 				//We cannot operate on game states that are closed
 				if (!closed.contains(neighbor)) {
@@ -229,15 +221,13 @@ public class PlannerAgent extends Agent {
 						
                         //Add the neighbor to the open queue
 						open.add(neighbor);
-					} else {
-						System.out.println("Open contains the neighbor");
 					}
-				} else {
-					System.out.println("Closed contains the neighbor");
 				}
 			}
 		}
-		System.out.print("No available path");
+		
+		//need to inform there is not path
+		System.err.print("No available path");
 		return null;
 	}
 
@@ -256,7 +246,6 @@ public class PlannerAgent extends Agent {
 			
 			if (action instanceof BuildPeasantAction){
 				actions.remove(action);
-				System.out.println("removing build peasant actions");
 			}
 			if (action instanceof MoveAction){
 				MoveAction mAction = (MoveAction)action;
@@ -264,8 +253,8 @@ public class PlannerAgent extends Agent {
 					actions.remove(action);
 				}
 			}
-			if (action instanceof GatherAction){
-				GatherAction gAction = (GatherAction)action;
+			if (action instanceof HarvestAction){
+				HarvestAction gAction = (HarvestAction)action;
 				if (gAction.getPeasantCount() < numPeasants - 1){
 					actions.remove(action);
 				}
@@ -301,7 +290,7 @@ public class PlannerAgent extends Agent {
 			int resId = resource.getId();
 			for (int i = 1; i <= maxPeasants; i++) {
 				actions.add(new MoveAction(i, state, null, resId, false));
-				actions.add(new GatherAction(i, resId, resource.getX(),
+				actions.add(new HarvestAction(i, resId, resource.getX(),
 						resource.getY()));
 				actions.add(new MoveAction(i, state, resId, null, true));
 			}
@@ -331,6 +320,9 @@ public class PlannerAgent extends Agent {
 	private static Stack<GameState> buildPath(GameState state) {
 		Stack<GameState> path = new Stack<>();
 		GameState curr = state;
+		
+		//build the plan backwards from goal state to initial state
+		//this way the stack will be loaded in order
 		while (curr.getParent() != null) {
 			path.push(curr);
 			curr = curr.getParent();
@@ -358,7 +350,6 @@ public class PlannerAgent extends Agent {
 			while (!planCopy.isEmpty()) {
 				actionList.add(planCopy.pop().parentAction);
 			}
-			System.out.println(actionList.toString());
 			
 			//Add all state actions to the action stack in reverse order
 			for (int i = actionList.size() - 1; i >= 0; i--) {

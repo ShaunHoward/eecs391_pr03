@@ -90,26 +90,6 @@ public class GameState implements Comparable<GameState> {
 		this.parent = parent;
 	}
 
-	public void setParent(GameState parent) {
-		this.parent = parent;
-	}
-
-	public GameState getParent() {
-		return this.parent;
-	}
-	
-	public void setDepth(int depth){
-		this.depth = depth;
-	}
-
-	public StripsAction getParentAction() {
-		return this.parentAction;
-	}
-
-	public int getDepth() {
-		return this.depth;
-	}
-
 	/**
 	 * Determines if this state is a goal state.
 	 * 
@@ -198,22 +178,6 @@ public class GameState implements Comparable<GameState> {
 		return heuristic;
 	}
 
-	int getPeasantCount() {
-		return peasants.size();
-	}
-
-	public void setCost(int cost) {
-		this.cost = cost;
-	}
-
-	public void setTotalCost(int totalCost) {
-		this.totalCost = totalCost;
-	}
-
-	public int getTotalCost() {
-		return this.totalCost;
-	}
-
 	/**
 	 * The cost of this game state is computed and set
 	 * in the A* search method.
@@ -225,6 +189,27 @@ public class GameState implements Comparable<GameState> {
 	 */
 	public int getCost() {
 		return cost;
+	}
+	
+
+	public void setParent(GameState parent) {
+		this.parent = parent;
+	}
+
+	public GameState getParent() {
+		return this.parent;
+	}
+	
+	public void setDepth(int depth){
+		this.depth = depth;
+	}
+
+	public StripsAction getParentAction() {
+		return this.parentAction;
+	}
+
+	public int getDepth() {
+		return this.depth;
 	}
 
 	/**
@@ -240,9 +225,23 @@ public class GameState implements Comparable<GameState> {
 				return resource;
 			}
 		}
-		
-		System.out.println("No resource with id " + id);
 		return null;
+	}
+	
+	int getPeasantCount() {
+		return peasants.size();
+	}
+
+	public void setCost(int cost) {
+		this.cost = cost;
+	}
+
+	public void setTotalCost(int totalCost) {
+		this.totalCost = totalCost;
+	}
+
+	public int getTotalCost() {
+		return this.totalCost;
 	}
 
 	/**
@@ -308,12 +307,9 @@ public class GameState implements Comparable<GameState> {
 					
 					//the peasants are not equal, so these states are not equal
 					if (!this.peasants.get(i).equals(s.peasants.get(i))){
-						System.out.println("States are not equal");
 						return false;
 					}
 				}
-				
-				System.out.println("States are equal");
 				return true;
 			}	
 		}

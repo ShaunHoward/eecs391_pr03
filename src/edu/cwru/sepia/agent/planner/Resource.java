@@ -37,11 +37,12 @@ public class Resource {
      * @param townHall - the town hall unit view
      */
     public Resource(ResourceNode.ResourceView resourceView, Unit.UnitView townHall) {
+        this.type = resourceView.getType();
+        this.amount = resourceView.getAmountRemaining();
         this.id = resourceView.getID();
         this.x = resourceView.getXPosition();
         this.y = resourceView.getYPosition();
-        this.type = resourceView.getType();
-        this.amount = resourceView.getAmountRemaining();
+        
         //Calculate an admissible distance from this resource to the town hall
         //Do this because the peasants only travel to/from resources and the town hall
         this.distance = (int)Math.ceil(DistanceMetrics.euclideanDistance(
@@ -56,12 +57,12 @@ public class Resource {
      * @param resToCopy - the resource to make a copy of
      */
     public Resource(Resource resToCopy) {
-        this.id = resToCopy.id;
-        this.x = resToCopy.x;
-        this.y = resToCopy.y;
         this.type = resToCopy.getType();
         this.amount = resToCopy.getAmount();
         this.distance = resToCopy.distance;
+        this.id = resToCopy.id;
+        this.x = resToCopy.x;
+        this.y = resToCopy.y;
     }
 
     /**

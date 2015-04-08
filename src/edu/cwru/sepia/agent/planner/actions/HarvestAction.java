@@ -5,7 +5,7 @@ import edu.cwru.sepia.agent.planner.Resource;
 import edu.cwru.sepia.agent.planner.GameState;
 
 /**
- * A gather action is an action to harvest resources in sepia with
+ * A harvest action is an action to harvest resources in sepia with
  * a STRIPS-like plan.
  * 
  * The preconditions for this action are that the peasants are adjacent to
@@ -20,13 +20,13 @@ import edu.cwru.sepia.agent.planner.GameState;
  * 
  * @author Shaun Howard
  */
-public class GatherAction implements StripsAction {
+public class HarvestAction implements StripsAction {
 
 	//the number of peasants to apply the action with
 	private int peasantCount;
 	
 	//the id of the target resource
-	private Integer targetId; 
+	private Integer targetResourceId; 
 	
 	//the x coordinate of the resource to gather
 	private int resX;
@@ -43,9 +43,9 @@ public class GatherAction implements StripsAction {
 	 * @param x - the x coordinate of the target
 	 * @param y - the y coordinate of the target
 	 */
-	public GatherAction(int k, Integer targetId, int x, int y) {
+	public HarvestAction(int k, Integer targetId, int x, int y) {
 		this.peasantCount = k;
-		this.targetId = targetId;
+		this.targetResourceId = targetId;
 		this.resX = x;
 		this.resY = y;
 	}
@@ -64,7 +64,7 @@ public class GatherAction implements StripsAction {
 		//Make sure there are enough resources to gather and up to the
 		//number of peasants for this action available to gather.
 		if (peasantCount <= s.peasants.size()
-				&& s.getResourceWithId(targetId).getAmount() >= peasantCount*100) {
+				&& s.getResourceWithId(targetResourceId).getAmount() >= peasantCount*100) {
 			for (Peasant peasant : s.peasants) {
 				//check that the peasants are valid for this action
 				//and that there are enough
@@ -88,7 +88,7 @@ public class GatherAction implements StripsAction {
 	public GameState apply(GameState s) {
 		int i = 0;
 		GameState newState = new GameState(s);
-		Resource res = newState.getResourceWithId(targetId);
+		Resource res = newState.getResourceWithId(targetResourceId);
 		
 		//check if peasants are valid and impose the limit
 		//of peasant count for gather, then 
@@ -125,7 +125,7 @@ public class GatherAction implements StripsAction {
 	 */
 	private boolean isValid(Peasant peasant) {
 		return peasant.getAdjacentResource() != null
-				&& peasant.getAdjacentResource().getId() == targetId
+				&& peasant.getAdjacentResource().getId() == targetResourceId
 				&& peasant.getCargo() == null;
 	}
 
@@ -146,7 +146,7 @@ public class GatherAction implements StripsAction {
 	 */
 	@Override
 	public String toString() {
-		return "GATHER(k:" + peasantCount + ", id:" + targetId + ")";
+		return "HARVEST(peasCount: " + peasantCount + ", target id:" + targetResourceId + ")";
 	}
 	
 	public int getPeasantCount() {
@@ -154,7 +154,7 @@ public class GatherAction implements StripsAction {
 	}
 
 	public int getTargetId() {
-		return targetId;
+		return targetResourceId;
 	}
 
 	public int getResourceX() {
@@ -172,9 +172,9 @@ public class GatherAction implements StripsAction {
 	 */
 	@Override
 	public boolean equals(Object o){
-		if (o != null && o instanceof GatherAction){
-			GatherAction a = (GatherAction)o;
-			return a.targetId == this.targetId &&
+		if (o != null && o instanceof HarvestAction){
+			HarvestAction a = (HarvestAction)o;
+			return a.targetResourceId == this.targetResourceId &&
 					a.peasantCount == this.peasantCount;
 		}
 		return false;

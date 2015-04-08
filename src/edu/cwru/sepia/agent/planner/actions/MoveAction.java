@@ -27,7 +27,7 @@ public class MoveAction implements StripsAction {
     
     //ids of the unit at the origin location and the destination location
     //one is null if it is the town hall
-    public Integer originId, destId;
+    public Integer startId, finishId;
     
     //the cost to execute this action in sepia
     private int makeSpan;
@@ -48,8 +48,8 @@ public class MoveAction implements StripsAction {
      */
     public MoveAction(int peasantCount, GameState s, Integer originId, Integer destId, boolean toTownhall) {
         this.peasantCount = peasantCount;
-        this.originId = originId;
-        this.destId = destId;
+        this.startId = originId;
+        this.finishId = destId;
         this.toTownHall = toTownhall;
         //set the makespan to the distance of this resource from the townhall
         makeSpan = s.getResourceWithId(destId == null ? originId : destId).getDistance();
@@ -60,8 +60,8 @@ public class MoveAction implements StripsAction {
         int i = 0;
         
         //Disallow moves to empty resource nodes
-        if(destId != null) { 
-            Resource resource = s.getResourceWithId(destId);
+        if(finishId != null) { 
+            Resource resource = s.getResourceWithId(finishId);
            
             //Prioritize gold over wood
             if((resource.getType().equals(ResourceNode.Type.TREE) && s.gold < goal.gold) || 
@@ -95,8 +95,8 @@ public class MoveAction implements StripsAction {
         	//check that peasants are valid and there are a limited number selected
             if(isValid(peasant) && i++ < peasantCount) {
             	//
-                if(destId == null) peasant.setAdjacentResource(null);
-                else peasant.setAdjacentResource(newState.getResourceWithId(destId));
+                if(finishId == null) peasant.setAdjacentResource(null);
+                else peasant.setAdjacentResource(newState.getResourceWithId(finishId));
             }
         newState.parentAction = this;
         return newState;
@@ -111,11 +111,11 @@ public class MoveAction implements StripsAction {
      */
     private boolean isValid(Peasant peasant) {
     	//we are going to the town hall
-        if(destId == null){
+        if(finishId == null){
             return peasant.getCargo() != null && 
             peasant.getCargoAmount() > 0 && 
             peasant.getAdjacentResource() != null &&
-            peasant.getAdjacentResource().getId() == originId;
+            peasant.getAdjacentResource().getId() == startId;
         } else {
             return peasant.getAdjacentResource() == null && peasant.getCargo() == null;
         }
@@ -137,9 +137,9 @@ public class MoveAction implements StripsAction {
 
     public int getPeasantCount() { return peasantCount; }
 
-    public Integer getDestId() { return destId; }
+    public Integer getDestId() { return finishId; }
 
-    public Integer getOriginId() { return originId; }
+    public Integer getOriginId() { return startId; }
 
     /**
      * Returns a string with the action type, the number of peasants, and the origin and destination ids.
@@ -147,7 +147,12 @@ public class MoveAction implements StripsAction {
      */
     @Override
     public String toString() {
-        return "MOVE(k:" + peasantCount + ", from:" + originId + ", to:" + destId + ")";
+    	String townhall = "town hall";
+    	if (startId == null){
+    		return "MOVE(peasCount:" + peasantCount + ", from:" + townhall + ", to:" + finishId + ")";
+    	} else {
+    		return "MOVE(peasCount:" + peasantCount + ", from:" + startId + ", to:" + townhall + ")";
+    	}    
     }
     
     /**
@@ -159,8 +164,8 @@ public class MoveAction implements StripsAction {
 	public boolean equals(Object o){
 		if (o != null && o instanceof MoveAction){
 			MoveAction a = (MoveAction)o;
-			return a.originId == this.originId &&
-					a.destId == this.destId &&
+			return a.startId == this.startId &&
+					a.finishId == this.finishId &&
 					a.peasantCount == this.peasantCount;
 		}
 		return false;

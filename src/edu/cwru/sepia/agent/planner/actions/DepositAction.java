@@ -115,7 +115,7 @@ public class DepositAction implements StripsAction {
      */
     @Override
     public String toString() {
-        return "DEPOSIT(k:" + peasantCount + ")";
+        return "DEPOSIT(peasCount: " + peasantCount + ")";
     }
     
 
