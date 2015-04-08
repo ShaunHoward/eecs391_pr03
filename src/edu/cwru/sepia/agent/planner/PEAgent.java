@@ -23,7 +23,7 @@ import java.util.Stack;
  * @author Shaun Howard (smh150), Matt Swartwout (mws85)
  */
 public class PEAgent extends Agent {
-
+	
 	private Stack<GameState> plan; // list of planned actions
 	private int townHallID;
 
@@ -51,7 +51,7 @@ public class PEAgent extends Agent {
 		}
 
 		System.out.println("Executing plan:");
-
+		
 		return middleStep(stateView, historyView);
 	}
 
@@ -401,8 +401,7 @@ public class PEAgent extends Agent {
 
 	@Override
 	public void terminalStep(State.StateView stateView,
-			History.HistoryView historyView) {
-	}
+			History.HistoryView historyView) {}
 
 	@Override
 	public void savePlayerData(OutputStream outputStream) {
