@@ -7,8 +7,14 @@ amounts of resources in the SEPIA game engine.
 
 Team: Shaun Howard (smh150) and Matt Swartwout (mws85)
 
-We have tested this planner and it works on all 4 given scenarios.
-At the end of action execution it prints the time necessary to execute the plan
+In order to run this code you will have to have the SEPIA jar and necessary maps for the resource collection game.
+
+Directions for setting up a possible game are here:
+
+http://engr.case.edu/ray_soumya/sepia/html/setup.html#eclipse-project-setup
+
+We have tested this planner and it works on all 4 given example scenarios, the highest required 3000 gold and 2000 wood with build peasants enabled.
+At the end of action plan execution the program prints the time it took to execute the plan
 to the console.
 
 We imposed a limit to building peasants. We chose the limit to be 3 peasants so the
