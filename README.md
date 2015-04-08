@@ -33,9 +33,19 @@ The planner is designed in a general way. One could put in any given number of p
 to branching factor. Hence, we limit the number of peasants to 3 for our purposes.
 This also allows our plan search to complete in finite time, before the user could possibly start the game.
 
-We use A* search to find the plan. We take into consideration the make span of each
-action along with the perks or detriments it will bring to the game. This means we
-maximize an action that will lead us to our goal, which is when the current game state (or the peasant's collection) has the desired amount of gold and wood. Our heuristic for a game state (with an associated parent action) is as follows:
+We use A* search to find the plan. A* is depth-limited to a depth of 140. We found this
+to be a good limit for our plan when it took longer to execute, but given our limit of peasants
+which is 3, the search completes before it reaches a depth of 140 in the search tree. After optimizations,
+we did not need this parameter anymore, but we think it is nice to have it in case someone tries to run the game with >3 peasants.
+In this case the planner will just return the plan with the best solution thus far, although it will not necesarily
+be complete. A depth of 140 was chosen because after that the search could continue for a long time and not be playable
+for while.
+
+We take into consideration the make span of each
+action along with the perks or detriments it will bring to the game. We thus search for actions with the minimum make span and best total cost
+because we want to spend the least time executing actions possible but get the most value out of our actions.
+This means we maximize actions that will lead us to our goal, which is when the current game state (or the peasant's collection) has the desired amount of gold and wood.
+Our heuristic for a game state (with an associated parent action) is as follows:
 
 The heuristic utilizes properties of this game state to determine the most probable distance to the desired goal state. Some values considered are:
 	 
@@ -51,6 +61,11 @@ should choose one resource over another due to distance and cycles necessary
 to gather the resources, and finally, the amount of wood at the current state 
 helps the peasants find the goal state sooner since wood has less priority as 
 gold and needs to be factored in the heuristic.
+
+The plan, after A* finds a plan, is printed to a text file located in the default given location which is in the
+top level project folder along with src named "saves". The plan is in this folder in a text file named "plan.txt".
+This plan shows each action along with its peasant count and variables it uses or is applied to.
+The plan actions are number from 1 (the start) to n (the final) in ascending order.
 
 Each action has its own class with an associated make span and all actions are a type of StripsAction. They all have methods to check preconditions for a given
 game state, to apply the action to a game state, and for getting the make span. The

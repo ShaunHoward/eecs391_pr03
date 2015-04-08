@@ -25,6 +25,13 @@ import java.io.*;
 
 /**
  * An agent that plans for a resource collection game in SEPIA using A* search.
+ * 
+ * The A* search is limited to a depth of 140 so the search completes in finite time.
+ * This means that if there are over 3 peasants built, which is not possible in our
+ * set up given the constructors, then the search will stop and return the best solution thus far.
+ * However, the depth-limit is unnecessary for 3 or less peasants and so we just left it there
+ * in case someone tried to run it with >3 peasants.
+ * 
  * This agent searches through possible actions of peasants for a certain number of
  * peasants. We determine the best outcome of actions based on combindations of their
  * make spans and heuristic weights. 
@@ -124,6 +131,11 @@ public class PlannerAgent extends Agent {
 		 * very big for 3 peasants, this is tolerable to us.
 		 */
 		plan = PlannerAgent.AstarSearch(initial, goal, 140);
+		
+		if (plan == null){
+			System.err.println("No plan was found for the given initial and goal states.");
+			System.exit(1);
+		}
 
 		//Prints the action list to a text file named "plan"
 		savePlan(getActionPlan(plan));
@@ -427,6 +439,7 @@ public class PlannerAgent extends Agent {
 	@Override
 	public void terminalStep(State.StateView stateView,
 			History.HistoryView historyView) {
+		System.out.println("Executing plan was successful.");
 		long totalTime = System.nanoTime() - startTime;
 		System.out.println("Total time to execute plan was: " +totalTime/1e9);
 	}
