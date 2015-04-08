@@ -43,7 +43,8 @@ import java.io.*;
  * @author Shaun Howard (smh150), Matt Swartwout(mws85)
  */
 public class PlannerAgent extends Agent {
-
+	private long startTime;
+	
 	private static final long serialVersionUID = 1L;
 
 	//Criteria that determines when the peasants win
@@ -141,7 +142,8 @@ public class PlannerAgent extends Agent {
 			System.err.println("Planning failed. No PEAgent initialized.");
 			return null;
 		}
-
+		
+		startTime = System.nanoTime();
 		return peAgent.middleStep(stateView, historyView);
 	}
 
@@ -389,8 +391,7 @@ public class PlannerAgent extends Agent {
 
 			outputWriter = new PrintWriter(outputFile.getAbsolutePath());
 
-			Stack<StripsAction> tempPlan = (Stack<StripsAction>) stripsPlan
-					.clone();
+			Stack<StripsAction> tempPlan = (Stack<StripsAction>) stripsPlan.clone();
 			int actionNumber = 1;
 			while (!tempPlan.isEmpty()) {
 				outputWriter.println(actionNumber + ": "
@@ -425,7 +426,10 @@ public class PlannerAgent extends Agent {
 
 	@Override
 	public void terminalStep(State.StateView stateView,
-			History.HistoryView historyView) {}
+			History.HistoryView historyView) {
+		long totalTime = System.nanoTime() - startTime;
+		System.out.println("Total time was " +totalTime/1e9);
+	}
 
 	@Override
 	public void savePlayerData(OutputStream outputStream) {}

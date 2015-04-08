@@ -55,7 +55,6 @@ public class PEAgent extends Agent {
 				townHallID = id;
 			}
 		}
-		
 		return middleStep(stateView, historyView);
 	}
 
@@ -350,8 +349,7 @@ public class PEAgent extends Agent {
 
 	@Override
 	public void terminalStep(State.StateView stateView,
-			History.HistoryView historyView) {
-	}
+			History.HistoryView historyView) {}
 
 	@Override
 	public void savePlayerData(OutputStream outputStream) {
