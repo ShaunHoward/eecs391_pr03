@@ -9,10 +9,10 @@ import edu.cwru.sepia.environment.model.state.ResourceNode;
  * 
  * @author Shaun Howard
  */
-public class PlanPeasant {
+public class Peasant {
 
 	//the resource this peasant may be next to
-    private PlanResource adjacentResource;
+    private Resource adjacentResource;
     
     //the type of cargo the peasant may be carrying
     private ResourceNode.Type cargoType;
@@ -35,7 +35,7 @@ public class PlanPeasant {
      * @param y - the y coordinate on the grid
      * @param id - the unique id of this peasant
      */
-    public PlanPeasant(int cargoAmount, int x, int y, int id) {
+    public Peasant(int cargoAmount, int x, int y, int id) {
     	this.cargoAmount = cargoAmount;
     	this.x = x;
     	this.y = y;
@@ -57,14 +57,14 @@ public class PlanPeasant {
      * 
      * @return the resource adjacent to this peasant or null if there is not one
      */
-    public PlanResource getAdjacentResource() { return adjacentResource; }
+    public Resource getAdjacentResource() { return adjacentResource; }
 
     /**
      * Sets the resource next to this peasant. Set null if there is not adjacent resource.
      *     
      * @param adjRes - the resource next to this peasant or null if there isn't one
      */
-    public void setAdjacentResource(PlanResource adjRes) { this.adjacentResource = adjRes; }
+    public void setAdjacentResource(Resource adjRes) { this.adjacentResource = adjRes; }
 
     public ResourceNode.Type getCargo() {
         return cargoType;
@@ -97,10 +97,10 @@ public class PlanPeasant {
      */
     @Override
     public boolean equals(Object o){
-    	if (o == null || !(o instanceof PlanPeasant)){
+    	if (o == null || !(o instanceof Peasant)){
     		return false;
     	} else {
-    		PlanPeasant p = (PlanPeasant)o;
+    		Peasant p = (Peasant)o;
     		return p.x == this.x && p.y == this.y && p.cargoAmount == this.cargoAmount && p.cargoType == this.cargoType;
     	}
     }

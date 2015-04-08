@@ -119,7 +119,7 @@ public class PEAgent extends Agent {
 		if (action instanceof MoveAction) {
 			MoveAction moveAction = (MoveAction) action;
 			Unit.UnitView townHallUnit = stateView.getUnit(townHallID);
-			PlanResource resource = nextState.getResourceWithId(moveAction
+			Resource resource = nextState.getResourceWithId(moveAction
 					.getOriginId() == null ? moveAction.getDestId() : moveAction
 					.getOriginId());
 			boolean done = false;
@@ -144,7 +144,7 @@ public class PEAgent extends Agent {
 			}
 
 			//Find the number of peasants that should be at the destination
-			for (PlanPeasant peasant : nextState.peasants) {
+			for (Peasant peasant : nextState.peasants) {
 				if (moveAction.toTownHall() && peasant.getAdjacentResource() == null
 						&& peasant.getCargoAmount() > 0) {
 					i++;

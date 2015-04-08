@@ -97,12 +97,12 @@ public class PlannerAgent extends Agent {
 			if (typeName.equals("TownHall"))
 				townHallID = id;
 			if (typeName.equals("Peasant"))
-				initial.peasants.add(new PlanPeasant(unit.getCargoAmount(), 0, 0, unit.getID()));
+				initial.peasants.add(new Peasant(unit.getCargoAmount(), 0, 0, unit.getID()));
 		}
 
 		//Find all resource locations on the map
 		for (int id : stateView.getAllResourceIds()) {
-			initial.resources.add(new PlanResource(stateView
+			initial.resources.add(new Resource(stateView
 					.getResourceNode(id), stateView.getUnit(townHallID)));
 		}
 
@@ -111,7 +111,7 @@ public class PlannerAgent extends Agent {
 		
 		//We find the best number of peasants to add to our mock game state
 		for (int i = 0; i < getMaxPeasants(); i++)
-			goal.peasants.add(new PlanPeasant(0, 0, 0, 0));
+			goal.peasants.add(new Peasant(0, 0, 0, 0));
 		
 		//Track the goal globally
 		goalState = goal;
@@ -299,7 +299,7 @@ public class PlannerAgent extends Agent {
 		actions = new ArrayList<StripsAction>();
 		
 		//Create actions for moving to destinations and gathering resources
-		for (PlanResource resource : state.resources) {
+		for (Resource resource : state.resources) {
 			int resId = resource.getId();
 			for (int i = 1; i <= maxPeasants; i++) {
 				actions.add(new MoveAction(i, state, null, resId, false));

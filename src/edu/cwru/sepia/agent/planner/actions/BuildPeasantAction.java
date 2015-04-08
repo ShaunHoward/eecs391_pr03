@@ -1,8 +1,8 @@
 package edu.cwru.sepia.agent.planner.actions;
 
 import edu.cwru.sepia.agent.planner.GameState;
-import edu.cwru.sepia.agent.planner.PlanPeasant;
-import edu.cwru.sepia.agent.planner.PlanResource;
+import edu.cwru.sepia.agent.planner.Peasant;
+import edu.cwru.sepia.agent.planner.Resource;
 
 /**
  * Builds a peasant action for use in the resource collection game
@@ -49,12 +49,12 @@ public class BuildPeasantAction implements StripsAction {
     	//Determine the next id available for the new peasant.
     	//This is based on the peasants and resources, collectively
     	//that already exist on the map.
-    	for (PlanPeasant peasant : newState.peasants){
+    	for (Peasant peasant : newState.peasants){
     		if (peasant.id > nextID) {
     			nextID = peasant.id;
     		}
     	}
-    	for (PlanResource resource : newState.resources){
+    	for (Resource resource : newState.resources){
     		if (resource.id > nextID) {
     			nextID = resource.id;
     		}
@@ -64,7 +64,7 @@ public class BuildPeasantAction implements StripsAction {
     	nextID++;
     	
     	//create a new peasant with that id
-        newState.peasants.add(new PlanPeasant(0, 0, 0, nextID));
+        newState.peasants.add(new Peasant(0, 0, 0, nextID));
         
         //account for making the peasant since it takes 400 gold
         newState.gold -= 400;
